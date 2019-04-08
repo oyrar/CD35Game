@@ -42,7 +42,7 @@ struct ButterData
     unsigned int cost;			// コスト
 
 	// ヒット結果判定
-	int ResultHit(void)
+	int ResultHit(void) const
 	{
 		int hit;
 		
@@ -65,6 +65,7 @@ struct ButterData
 			hit = 4;
 		}
 		
+		return hit;
 	}
 };
 
@@ -77,6 +78,8 @@ struct PitcherData
     std::string		name;			// 氏名
     double			bougyoritsu;	// 防御率
     double			sikyuuritu;		// 与死球
+
+    unsigned int cost;			// コスト
 };
 
 class Team{
@@ -86,6 +89,7 @@ public :
 
 	bool readButterData();
 	bool readPitcherData();
+	bool readPlayer(char* filename);
 	bool selectPlayers();
 	void displayTeam();
 	void debugPrint();
@@ -97,6 +101,8 @@ public :
 	int Katen( int katen)
 	{
 		tokuten += katen;
+
+		return tokuten;
 	}
 	
 	ButterData Butter( void )
@@ -404,7 +410,7 @@ Team::readPitcherData()
 
             char *e;
         	double bougyo = (double)strtof(tok, &e);
-        	data.bougyoritsu = (0.0099 * bougyo * bougyo) - (0.039 * bougyo) + 0.2604
+        	data.bougyoritsu = (0.0099 * bougyo * bougyo) - (0.039 * bougyo) + 0.2604;
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
@@ -542,15 +548,20 @@ Team::readPlayer(char* filename)
 class Base
 {
 public :
-	Base();
-	virtual ~Base();
+	Base()
+		: m_Base()
+	{
+	}
+	virtual ~Base()
+	{
+	}
 
-	void Hit( int hit );
+	int Hit( int hit );
 	void Clear( void );
 
 private:
 	bool m_Base[4];		// 出塁者有無
-}
+};
 
 // ヒット処理
 int Base::Hit( int hit )
@@ -597,7 +608,12 @@ void Base::Clear( void )
 	m_Base[0] = true; // 打者BOXは常にtrue
 }
 
-int main( int args , char* argv )
+void PlayBall( Team &senkou, Team &koukou );
+void Play( Team &seme, Team &mamori );
+int Chkhit( const ButterData& batter , const PitcherData& pitcher );
+bool IsHit( const ButterData& batter , const PitcherData& pitcher );
+
+int main( int argc , char** argv )
 {
 	Team senkou;	// 先攻チームデータ
 	Team koukou;	// 後攻チームデータ
@@ -627,13 +643,13 @@ int main( int args , char* argv )
     }
 
     //printf("#先行攻チームのデータ読み込み\n");
-    if(!koukou.readPlayer(arg[0]))
+    if(!koukou.readPlayer(argv[0]))
     {
         return 1;
     }
 
     //printf("#後攻チームのデータ読み込み\n");
-    if(!koukou.readPlayer(arg[1]))
+    if(!koukou.readPlayer(argv[1]))
     {
         return 1;
     }
@@ -653,7 +669,7 @@ void PlayBall( Team &senkou, Team &koukou )
 		Play( senkou , koukou );
 
 		// 9回かつ後攻が勝っている場合はそのまま試合終了
-		if( ( INING_NUM - 1 ) != i ||  senkou.Gettokuten() => koukou.Gettokuten() )
+		if( ( INING_NUM - 1 ) != i ||  senkou.Gettokuten() >= koukou.Gettokuten() )
 		{
 			// 後攻の攻撃
 			Play( koukou , senkou );
@@ -670,7 +686,7 @@ void PlayBall( Team &senkou, Team &koukou )
 		// 後攻の攻撃
 		Play( koukou , senkou );
 		
-		entyou++
+		++entyou;
 
 		// 延長は3回(全12回)まで
 		if( ENTYOU_NUM <= entyou )
@@ -686,12 +702,14 @@ void Play( Team &seme, Team &mamori )
 	int out = 0;		// アウト数
 	int hit = 0;		// 出塁数
 	int tokuten = 0;	// 得点
+
+	Base base;	// 進塁情報
 	
 	// アウトが規定値に達すれば処理を終了
 	while( OUT_NUM > out )
 	{
 		// ヒット結果を判定
-		hit = Chkhit( seme.Batter(), mamori.Pitcher() );
+		hit = Chkhit( seme.Butter(), mamori.Pitcher() );
 		
 		// 出塁数が0であればアウトとする
 		if( 0 == hit )
@@ -701,17 +719,16 @@ void Play( Team &seme, Team &mamori )
 		else
 		{
 			// ヒットであれば出塁処理と得点の加算を行う。
-			tokuten = tokuten + Base.Hit(hit);
+			tokuten = tokuten + base.Hit(hit);
 		}
 	}
-	// 出塁状態を初期化
-	Base.Clear();
+
 	// 得点を攻撃チームに加える。
 	seme.Katen(tokuten);
 }
 
 // ヒット確認
-int Chkhit( ButterData& batter , PitcherData& pitcher )
+int Chkhit( const ButterData& batter , const PitcherData& pitcher )
 {
 	int hit = 0;
 	
@@ -726,22 +743,20 @@ int Chkhit( ButterData& batter , PitcherData& pitcher )
 }
 
 // ヒット判定
-bool IsHit( ButterData& batter , PitcherData& pitcher )
+bool IsHit( const ButterData& batter , const PitcherData& pitcher )
 {
-	double hitritu;
-	double sikyuuritu;
-	double bougyoritu = pitcher.Getbougyoritu();
-	double daritu = batter.Getdaritu();
+	const double bougyoritu = pitcher.bougyoritsu;
+	const double daritu = batter.daritsu;
 	
 	bool ret = false;
 	
 	// ヒット率を取得
-	hitritu = ( bougyoritu + daritu ) / 2.0;
+	const double hitritu = ( bougyoritu + daritu ) / 2.0;
 	
 	// 四球率を取得
-	sikyuuritu = pithcer.Getsikyuuritu();
+	const double sikyuuritu = pitcher.sikyuuritu;
 	
-	double rnd1 = rand();
+	const double rnd1 = rand();
 	
 	// 四球でもヒット扱いにする。
 	if( rnd1 < ( hitritu + sikyuuritu) )
