@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <array>
+#include <numeric>
 
 // ファイル一行の最大文字数
 #define MAX_LENGTH (256u)
@@ -20,13 +22,15 @@
 // 投手データファイル名
 #define PITCHER_FILE_NAME ("File2")
 // 一試合のイニング数
-#define INING_NUM (9)
+constexpr int INING_NUM =9;
 // 一試合の最大イニング数
-#define MAX_INING_NUM (12)
+constexpr int MAX_INING_NUM = 12;
 // 延長イニング数
-#define ENTYOU_NUM ( MAX_INING_NUM - INING_NUM )
+constexpr int ENTYOU_NUM = MAX_INING_NUM - INING_NUM;
 // アウト数
 #define OUT_NUM (3)
+
+// = ButterData
 
 /*
  * 野手データ
@@ -69,6 +73,8 @@ struct ButterData
 	}
 };
 
+// = PitherData
+
 /*
  * 投手データ
  */
@@ -81,6 +87,8 @@ struct PitcherData
 
     unsigned int cost;			// コスト
 };
+
+// = Team
 
 class Team{
 public :
@@ -545,6 +553,8 @@ Team::readPlayer(char* filename)
     return true;
 }
 
+// = Base
+
 class Base
 {
 public :
@@ -608,13 +618,113 @@ void Base::Clear( void )
 	m_Base[0] = true; // 打者BOXは常にtrue
 }
 
+// PlayData
+
+class InningTeamPlayData
+{
+public:
+
+	InningTeamPlayData() = default;
+	InningTeamPlayData(const InningTeamPlayData&) = default;
+	InningTeamPlayData(InningTeamPlayData&&) noexcept = default;
+	InningTeamPlayData& operator=(const InningTeamPlayData&) = default;
+	InningTeamPlayData& operator=(InningTeamPlayData&&) noexcept = default;
+	~InningTeamPlayData() = default;
+
+	void ButterResult(int result)
+	{
+		butter_result_.push_back(result);
+	}
+
+	void Run(int run)
+	{
+		run_ = run;
+	}
+
+private:
+
+	std::vector< int > butter_result_;
+	int run_;	// 得点
+
+};
+
+class TeamPlayData
+{
+public:
+
+	TeamPlayData() = default;
+	TeamPlayData(const TeamPlayData&) = default;
+	TeamPlayData(TeamPlayData&&) noexcept = default;
+	TeamPlayData& operator=(const TeamPlayData&) = default;
+	TeamPlayData& operator=(TeamPlayData&&) noexcept = default;
+	~TeamPlayData() = default;
+
+	// イニングの結果設定
+	void SetInningResult(int inning, const InningTeamPlayData& data)
+	{
+		inning_data_[inning] = data;
+	}
+	void SetInningResult(int inning, InningTeamPlayData&& data)
+	{
+		inning_data_[inning] = std::move(data);
+	}
+
+private:
+
+	std::array< InningTeamPlayData, MAX_INING_NUM > inning_data_;	// 各イニングごとの結果
+
+};
+
+class PlayData
+{
+public:
+
+	PlayData() = default;
+	PlayData(const PlayData&) = default;
+	PlayData& operator=(const PlayData&) = default;
+	~PlayData() = default;
+
+	void SetInningResultFirstStrikeTeam(int inning, const InningTeamPlayData& data) { return first_strike_team_.SetInningResult(inning, data); };
+	void SetInningResultFirstStrikeTeam(int inning, InningTeamPlayData&& data) { return first_strike_team_.SetInningResult(inning, std::move(data)); };
+	void SetInningResultSecondStrikeTeam(int inning, const InningTeamPlayData& data) { return second_strike_team_.SetInningResult(inning, data); };
+	void SetInningResultSecondStrikeTeam(int inning, InningTeamPlayData&& data) { return second_strike_team_.SetInningResult(inning, std::move(data)); };
+
+
+private:
+
+	TeamPlayData first_strike_team_;
+	TeamPlayData second_strike_team_;
+
+};
+
+//
+
 void PlayBall( Team &senkou, Team &koukou );
-void Play( Team &seme, Team &mamori );
-int Chkhit( const ButterData& batter , const PitcherData& pitcher );
-bool IsHit( const ButterData& batter , const PitcherData& pitcher );
+
+// コマンドオプションを扱いやすいようvectorに変更
+std::vector< std::string > OptStore(int argc, char** argv)
+{
+	std::vector< std::string > result;
+	for (int i = 0; i < argc; ++i)
+	{
+		result.push_back(argv[i]);
+	}
+
+	return std::move(result);
+}
 
 int main( int argc , char** argv )
 {
+	if (argc < 5)
+	{
+		fprintf(stderr, "usage %s 先攻チーム選手データ 後攻チーム選手データ 野手データ 投手データ\n", argv[0]);
+
+		return -1;
+	}
+
+	// コマンドオプション
+	std::vector< std::string > options(OptStore(argc, argv));
+
 	Team senkou;	// 先攻チームデータ
 	Team koukou;	// 後攻チームデータ
 
@@ -660,36 +770,66 @@ int main( int argc , char** argv )
 	return 0;
 }
 
+InningTeamPlayData Play( Team &seme, Team &mamori );
+
+int Chkhit( const ButterData& batter , const PitcherData& pitcher );
+bool IsHit( const ButterData& batter , const PitcherData& pitcher );
+
+bool IsInningFinishFirstStrike(int inning, int first_run, int second_run)
+{
+	if (inning < (INING_NUM - 1))
+	{	// 8回までは無条件で終了しない
+		return false;
+	}
+
+	// 9回以降は後攻側が負けていれば終了しない
+	if (first_run >= second_run)
+	{
+		return false;
+	}
+
+	// 9以降かつ先攻側が勝っていれば試合終了
+	return true;
+}
+
+bool IsInningFinishSecondStrike(int inning, int first_run, int second_run)
+{
+	if (inning < (INING_NUM - 1))
+	{	// 8回までは無条件で終了しない
+		return false;
+	}
+
+	// 9回以降はどちらかのチームが勝っていれば終了する
+	if (first_run != second_run)
+	{
+		return true;
+	}
+
+	if (inning >= (MAX_INING_NUM - 1))
+	{	// 最大イニングまで行けば終了する
+		return true;
+	}
+
+	// 9回以降かつ最大イニング未満で同一得点なら試合続行
+	return true;
+}
+
 void PlayBall( Team &senkou, Team &koukou )
 {
-	// 1回から9回まで実行
-	for( int i = 0; i < INING_NUM; i++ )
+	PlayData play_data;
+
+	for (int inning = 0; inning < MAX_INING_NUM; ++inning)
 	{
 		// 先攻の攻撃
-		Play( senkou , koukou );
-
-		// 9回かつ後攻が勝っている場合はそのまま試合終了
-		if( ( INING_NUM - 1 ) != i ||  senkou.Gettokuten() >= koukou.Gettokuten() )
+		play_data.SetInningResultFirstStrikeTeam(inning, Play( senkou , koukou ));
+		if (IsInningFinishFirstStrike(inning, senkou.Gettokuten(), koukou.Gettokuten()))
 		{
-			// 後攻の攻撃
-			Play( koukou , senkou );
+			break;
 		}
-	}
-	
-	int entyou = 0;
-	
-	// 同点の場合は、延長戦を行う。
-	while( senkou.Gettokuten() == koukou.Gettokuten() )
-	{
-		// 先攻の攻撃
-		Play( senkou , koukou );
-		// 後攻の攻撃
-		Play( koukou , senkou );
-		
-		++entyou;
 
-		// 延長は3回(全12回)まで
-		if( ENTYOU_NUM <= entyou )
+		// 後攻の攻撃
+		play_data.SetInningResultSecondStrikeTeam(inning, Play( koukou , senkou ));
+		if (IsInningFinishSecondStrike(inning, senkou.Gettokuten(), koukou.Gettokuten()))
 		{
 			break;
 		}
@@ -697,10 +837,11 @@ void PlayBall( Team &senkou, Team &koukou )
 }
 
 // 1イニング
-void Play( Team &seme, Team &mamori )
+InningTeamPlayData  Play( Team &seme, Team &mamori)
 {
+	InningTeamPlayData inning_team_result;
+
 	int out = 0;		// アウト数
-	int hit = 0;		// 出塁数
 	int tokuten = 0;	// 得点
 
 	Base base;	// 進塁情報
@@ -709,8 +850,9 @@ void Play( Team &seme, Team &mamori )
 	while( OUT_NUM > out )
 	{
 		// ヒット結果を判定
-		hit = Chkhit( seme.Butter(), mamori.Pitcher() );
-		
+		const int hit = Chkhit( seme.Butter(), mamori.Pitcher() );
+		inning_team_result.ButterResult(hit);
+
 		// 出塁数が0であればアウトとする
 		if( 0 == hit )
 		{
@@ -725,6 +867,9 @@ void Play( Team &seme, Team &mamori )
 
 	// 得点を攻撃チームに加える。
 	seme.Katen(tokuten);
+	inning_team_result.Run(tokuten);
+
+	return std::move(inning_team_result);
 }
 
 // ヒット確認
