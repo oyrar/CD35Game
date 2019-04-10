@@ -811,7 +811,7 @@ bool IsInningFinishSecondStrike(int inning, int first_run, int second_run)
 	}
 
 	// 9回以降かつ最大イニング未満で同一得点なら試合続行
-	return true;
+	return false;
 }
 
 void PlayBall( Team &senkou, Team &koukou )
