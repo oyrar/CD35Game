@@ -8,6 +8,7 @@
 #include <string>
 #include <array>
 #include <numeric>
+#include <cinttypes>
 
 // ファイル一行の最大文字数
 #define MAX_LENGTH (256u)
@@ -219,7 +220,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -249,7 +250,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -268,7 +269,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -287,7 +288,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -306,7 +307,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -326,7 +327,7 @@ Team::readButterData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:%d行目 変換不可能部分＝%s\n", __LINE__, i, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\',%dが変換不可\n", __LINE__, e-tok+1, *e, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\',%dが変換不可\n", __LINE__, e-tok+1, *e, *e);
     	    	continue;
     	    }
 
@@ -391,7 +392,7 @@ Team::readPitcherData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -422,7 +423,7 @@ Team::readPitcherData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -441,7 +442,7 @@ Team::readPitcherData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
         }
@@ -461,7 +462,7 @@ Team::readPitcherData()
 
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:%d行目 変換不可能部分＝%s\n", __LINE__, i, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\',%dが変換不可\n", __LINE__, e-tok+1, *e, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\',%dが変換不可\n", __LINE__, e-tok+1, *e, *e);
     	    	continue;
     	    }
 
@@ -527,7 +528,7 @@ Team::readPlayer(char* filename)
         	
     	    if (*e != '\0') {
         		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%ld文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
 
