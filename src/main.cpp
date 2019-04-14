@@ -1,25 +1,24 @@
-﻿#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <limits.h>
-#include <vector>
-#include <algorithm>
-#include <string>
+﻿#include <algorithm>
 #include <array>
-#include <numeric>
 #include <cinttypes>
+#include <climits>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <numeric>
+#include <string>
+#include <vector>
 
 // ファイル一行の最大文字数
 #define MAX_LENGTH (256u)
 // 1チームの最大コスト
 #define MAX_COST (100u)
 // 野手データ最大人数
-#define MAX_BUTTER_NUM (100u)
+#define MAX_batter_NUM (100u)
 // 投手データ最大人数
 #define MAX_PITCHER_NUM (100u)
 // 野手データファイル名
-#define BUTTER_FILE_NAME ("File1")
+#define BATTER_FILE_NAME ("File1")
 // 投手データファイル名
 #define PITCHER_FILE_NAME ("File2")
 // 一試合のイニング数
@@ -31,12 +30,12 @@ constexpr int ENTYOU_NUM = MAX_INING_NUM - INING_NUM;
 // アウト数
 #define OUT_NUM (3)
 
-// = ButterData
+// = BatterData
 
 /*
  * 野手データ
  */
-struct ButterData
+struct BatterData
 {
     unsigned int	id;			// ID
     std::string		name;		// 氏名
@@ -96,12 +95,10 @@ public :
 	Team();
 	virtual ~Team();
 
-	bool readButterData();
+	bool readBatterData();
 	bool readPitcherData();
 	bool readPlayer(char* filename);
-	bool selectPlayers();
 	void displayTeam();
-	void debugPrint();
 	int Gettokuten(void)
 	{
 		return tokuten;
@@ -114,10 +111,10 @@ public :
 		return tokuten;
 	}
 	
-	ButterData Butter( void )
+	BatterData Batter( void )
 	{
 		dajun = dajun % 9;
-		return m_selectedButterPlayers[dajun++];
+		return m_selectedBatterPlayers[dajun++];
 	}
 	
 	PitcherData Pitcher( void )
@@ -127,11 +124,11 @@ public :
 	
 private:
 	// ファイルから読み込んだ野手データ
-	std::vector<ButterData> m_butterData;
+	std::vector<BatterData> m_batterData;
 	// ファイルから読み込んだ投手データ
 	std::vector<PitcherData> m_pitcherData;
 	// 選択した野手データ
-	std::vector<ButterData> m_selectedButterPlayers;
+	std::vector<BatterData> m_selectedBatterPlayers;
 	// 選択した投手データ
 	PitcherData m_seletedPitcherPlayer;
 	int tokuten;
@@ -140,9 +137,9 @@ private:
 };
 
 Team::Team()
-: m_butterData()
+: m_batterData()
 , m_pitcherData()
-, m_selectedButterPlayers()
+, m_selectedBatterPlayers()
 , m_seletedPitcherPlayer()
 {
 	tokuten = 0;
@@ -164,8 +161,8 @@ Team::displayTeam()
     for( i = 0u ; i < 9 ; i++ )
     {
         printf("%d#%s\n",
-            m_selectedButterPlayers[i].id,
-            m_selectedButterPlayers[i].name.c_str());
+            m_selectedBatterPlayers[i].id,
+            m_selectedBatterPlayers[i].name.c_str());
     }
     printf("%d#%s\n",
         m_seletedPitcherPlayer.id,
@@ -176,19 +173,19 @@ Team::displayTeam()
  * 野手データ読み込み
  */
 bool
-Team::readButterData()
+Team::readBatterData()
 {
-    FILE* fp = fopen(BUTTER_FILE_NAME, "r");
+    FILE* fp = fopen(BATTER_FILE_NAME, "r");
     if( NULL == fp )
     {
         // 読み込み失敗
-        fprintf(stderr, "fopen err %s\n", BUTTER_FILE_NAME);
+        fprintf(stderr, "fopen err %s\n", BATTER_FILE_NAME);
         return false;
     }
 
     // 読み込みバッファ
     char buffer[MAX_LENGTH];
-    for( unsigned int i = 0u ; i < MAX_BUTTER_NUM ; i++)
+    for( unsigned int i = 0u ; i < MAX_batter_NUM ; i++)
     {
         // 一行読み込み
         memset(buffer, 0, sizeof(buffer));
@@ -205,7 +202,7 @@ Team::readButterData()
             buffer[strlen(buffer) - 1] = '\0';
         }
 
-        ButterData data;
+        BatterData data;
         // ID
         {
             char* tok = strtok(buffer, ",");
@@ -333,7 +330,7 @@ Team::readButterData()
 
         }
 
-        m_butterData.push_back(data);
+        m_batterData.push_back(data);
 
     }
 
@@ -542,7 +539,7 @@ Team::readPlayer(char* filename)
         	{
         		// 野手はIDから2000引く
         		id = id - 1000;
-		        m_selectedButterPlayers.push_back(m_butterData[id]);
+		        m_selectedBatterPlayers.push_back(m_batterData[id]);
         	}
         }
 
@@ -632,19 +629,36 @@ public:
 	InningTeamPlayData& operator=(InningTeamPlayData&&) noexcept = default;
 	~InningTeamPlayData() = default;
 
-	void ButterResult(int result)
+	void SetbatterResult(int result)
 	{
-		butter_result_.push_back(result);
+		batter_result_.push_back(result);
 	}
 
-	void Run(int run)
+	size_t HitCount() const
+	{
+		return std::count_if(batter_result_.begin(), batter_result_.end(), [](int v) -> bool {
+			return (0 != v);
+		});
+	}
+
+	size_t batterCount() const
+	{
+		return batter_result_.size();
+	}
+
+	void SetRun(int run)
 	{
 		run_ = run;
 	}
 
+	int Run() const
+	{
+		return run_;
+	}
+
 private:
 
-	std::vector< int > butter_result_;
+	std::vector< int > batter_result_;	// 打順ごとの結果
 	int run_;	// 得点
 
 };
@@ -670,6 +684,14 @@ public:
 		inning_data_[inning] = std::move(data);
 	}
 
+	// 得点取得
+	int Runs() const
+	{
+		return std::accumulate(std::begin(inning_data_), std::end(inning_data_), 0, [](int val, const InningTeamPlayData& data) -> int {
+			return val + data.Run();
+		});
+	}
+
 private:
 
 	std::array< InningTeamPlayData, MAX_INING_NUM > inning_data_;	// 各イニングごとの結果
@@ -685,16 +707,16 @@ public:
 	PlayData& operator=(const PlayData&) = default;
 	~PlayData() = default;
 
-	void SetInningResultFirstStrikeTeam(int inning, const InningTeamPlayData& data) { return first_strike_team_.SetInningResult(inning, data); };
-	void SetInningResultFirstStrikeTeam(int inning, InningTeamPlayData&& data) { return first_strike_team_.SetInningResult(inning, std::move(data)); };
-	void SetInningResultSecondStrikeTeam(int inning, const InningTeamPlayData& data) { return second_strike_team_.SetInningResult(inning, data); };
-	void SetInningResultSecondStrikeTeam(int inning, InningTeamPlayData&& data) { return second_strike_team_.SetInningResult(inning, std::move(data)); };
+	void SetInningResultBatFirstTeam(int inning, const InningTeamPlayData& data) { return bat_first_team_.SetInningResult(inning, data); };
+	void SetInningResultBatFirstTeam(int inning, InningTeamPlayData&& data) { return bat_first_team_.SetInningResult(inning, std::move(data)); };
+	void SetInningResultBatSecondTeam(int inning, const InningTeamPlayData& data) { return bat_second_team_.SetInningResult(inning, data); };
+	void SetInningResultBatSecondTeam(int inning, InningTeamPlayData&& data) { return bat_second_team_.SetInningResult(inning, std::move(data)); };
 
 
 private:
 
-	TeamPlayData first_strike_team_;
-	TeamPlayData second_strike_team_;
+	TeamPlayData bat_first_team_;
+	TeamPlayData bat_second_team_;
 
 };
 
@@ -730,7 +752,7 @@ int main( int argc , char** argv )
 	Team koukou;	// 後攻チームデータ
 
     //printf("#野手データ読み込み\n");
-    if(!senkou.readButterData())
+    if(!senkou.readBatterData())
     {
         return 1;
     }
@@ -742,7 +764,7 @@ int main( int argc , char** argv )
     }
 	
     //printf("#野手データ読み込み\n");
-    if(!senkou.readButterData())
+    if(!senkou.readBatterData())
     {
         return 1;
     }
@@ -773,10 +795,10 @@ int main( int argc , char** argv )
 
 InningTeamPlayData Play( Team &seme, Team &mamori );
 
-int Chkhit( const ButterData& batter , const PitcherData& pitcher );
-bool IsHit( const ButterData& batter , const PitcherData& pitcher );
+int Chkhit( const BatterData& batter , const PitcherData& pitcher );
+bool IsHit( const BatterData& batter , const PitcherData& pitcher );
 
-bool IsInningFinishFirstStrike(int inning, int first_run, int second_run)
+bool IsInningFinishBatFirst(int inning, int first_run, int second_run)
 {
 	if (inning < (INING_NUM - 1))
 	{	// 8回までは無条件で終了しない
@@ -793,7 +815,7 @@ bool IsInningFinishFirstStrike(int inning, int first_run, int second_run)
 	return true;
 }
 
-bool IsInningFinishSecondStrike(int inning, int first_run, int second_run)
+bool IsInningFinishBatSecond(int inning, int first_run, int second_run)
 {
 	if (inning < (INING_NUM - 1))
 	{	// 8回までは無条件で終了しない
@@ -822,15 +844,15 @@ void PlayBall( Team &senkou, Team &koukou )
 	for (int inning = 0; inning < MAX_INING_NUM; ++inning)
 	{
 		// 先攻の攻撃
-		play_data.SetInningResultFirstStrikeTeam(inning, Play( senkou , koukou ));
-		if (IsInningFinishFirstStrike(inning, senkou.Gettokuten(), koukou.Gettokuten()))
+		play_data.SetInningResultBatFirstTeam(inning, Play( senkou , koukou ));
+		if (IsInningFinishBatFirst(inning, senkou.Gettokuten(), koukou.Gettokuten()))
 		{
 			break;
 		}
 
 		// 後攻の攻撃
-		play_data.SetInningResultSecondStrikeTeam(inning, Play( koukou , senkou ));
-		if (IsInningFinishSecondStrike(inning, senkou.Gettokuten(), koukou.Gettokuten()))
+		play_data.SetInningResultBatSecondTeam(inning, Play( koukou , senkou ));
+		if (IsInningFinishBatSecond(inning, senkou.Gettokuten(), koukou.Gettokuten()))
 		{
 			break;
 		}
@@ -851,8 +873,8 @@ InningTeamPlayData  Play( Team &seme, Team &mamori)
 	while( OUT_NUM > out )
 	{
 		// ヒット結果を判定
-		const int hit = Chkhit( seme.Butter(), mamori.Pitcher() );
-		inning_team_result.ButterResult(hit);
+		const int hit = Chkhit( seme.Batter(), mamori.Pitcher() );
+		inning_team_result.SetbatterResult(hit);
 
 		// 出塁数が0であればアウトとする
 		if( 0 == hit )
@@ -868,13 +890,13 @@ InningTeamPlayData  Play( Team &seme, Team &mamori)
 
 	// 得点を攻撃チームに加える。
 	seme.Katen(tokuten);
-	inning_team_result.Run(tokuten);
+	inning_team_result.SetRun(tokuten);
 
 	return std::move(inning_team_result);
 }
 
 // ヒット確認
-int Chkhit( const ButterData& batter , const PitcherData& pitcher )
+int Chkhit( const BatterData& batter , const PitcherData& pitcher )
 {
 	int hit = 0;
 	
@@ -889,7 +911,7 @@ int Chkhit( const ButterData& batter , const PitcherData& pitcher )
 }
 
 // ヒット判定
-bool IsHit( const ButterData& batter , const PitcherData& pitcher )
+bool IsHit( const BatterData& batter , const PitcherData& pitcher )
 {
 	const double bougyoritu = pitcher.bougyoritsu;
 	const double daritu = batter.daritsu;
