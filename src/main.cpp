@@ -13,6 +13,14 @@
 #include <tuple>
 #include <vector>
 
+constexpr const char* DEFAULT_INPUT[] =
+{
+	"BatFirstTeam.dat",
+	"BatSecondTeam.dat",
+	"Batter.dat",
+	"Pitcher.dat",
+};
+
 // ファイル一行の最大文字数
 constexpr size_t MAX_LENGTH = 256u;
 // 1チームの最大コスト
@@ -165,7 +173,7 @@ std::vector< std::string > SplitComma(const std::string& str)
 		result.push_back(buffer);
 	}
 
-	return std::move(result);
+	return result;
 }
 
 /*
@@ -778,31 +786,57 @@ private:
 
 //
 
-void PlayBall( Team &senkou, Team &koukou );
+namespace Util
+{
+
+template< class C >
+constexpr auto Size(const C& v) -> decltype(v.size()) { return v.size(); }
+
+	template< typename T, size_t SZ >
+constexpr size_t Size(const T (&)[SZ]) noexcept { return SZ; }
+
+}
 
 // コマンドオプションを扱いやすいようvectorに変更
 std::vector< std::string > OptStore(int argc, char** argv)
 {
 	std::vector< std::string > result;
-	for (int i = 0; i < argc; ++i)
+
+	if (argc == 5)
 	{
-		result.push_back(argv[i]);
+		result.insert(result.end(), argv, argv + argc);
+
+		return result;
 	}
 
-	return std::move(result);
+	if (argc == 1)
+	{
+		result.push_back(argv[0]);
+		result.insert(result.end(), DEFAULT_INPUT, DEFAULT_INPUT + Util::Size(DEFAULT_INPUT));
+
+		return  result;
+	}
+
+	fprintf(stderr, "usage %s [先攻チーム選手データ 後攻チーム選手データ 野手データ 投手データ]\n", argv[0]);
+	fprintf(stderr, "省略時 先攻チーム選手データ:%s\n", DEFAULT_INPUT[0]);
+	fprintf(stderr, "       後攻チーム選手データ:%s\n", DEFAULT_INPUT[1]);
+	fprintf(stderr, "       野手データ:%s\n", DEFAULT_INPUT[2]);
+	fprintf(stderr, "       投手データ:%s\n", DEFAULT_INPUT[3]);
+
+	return result;
 }
+
+void PlayBall( Team &senkou, Team &koukou );
 
 int main( int argc , char** argv )
 {
-	if (argc < 5)
-	{
-		fprintf(stderr, "usage %s 先攻チーム選手データ 後攻チーム選手データ 野手データ 投手データ\n", argv[0]);
-
-		return -1;
-	}
 
 	// コマンドオプション
 	const std::vector< std::string > options(OptStore(argc, argv));
+	if (options.empty())
+	{
+		return -1;
+	}
 
 	const std::string& bat_first_team = options[1];
 	const std::string& bat_second_team = options[2];
@@ -966,7 +1000,7 @@ InningTeamPlayData  Play( Team &seme, Team &mamori)
 	inning_team_result.SetRun(tokuten);
 
 	inning_team_result.Validate();
-	return std::move(inning_team_result);
+	return inning_team_result;
 }
 
 // ヒット確認
