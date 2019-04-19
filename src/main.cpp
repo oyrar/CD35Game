@@ -25,7 +25,7 @@ constexpr const char* DEFAULT_INPUT[] =
 // ファイル一行の最大文字数
 constexpr size_t MAX_LENGTH = 512u;
 // 1チームの最大コスト
-#define MAX_COST (100u)
+constexpr unsigned int  MAX_COST = 550u;
 // 野手データ最大人数
 constexpr unsigned int MAX_BATTER_NUM = 65535u;
 // 投手データ最大人数
@@ -160,7 +160,17 @@ public :
 	{
 		return m_seletedPitcherPlayer;
 	}
-	
+
+	int Cost() const
+	{
+		const unsigned int batter_cost = std::accumulate(
+			m_selectedBatterPlayers.cbegin(), m_selectedBatterPlayers.cend(), 0u, [](unsigned int val, const BatterData& dat) -> unsigned int {
+				return val += dat.cost;
+			});
+
+		return batter_cost + m_seletedPitcherPlayer.cost;
+	}
+
 private:
 
 	bool readBatterData(const std::string& data_file);
@@ -948,6 +958,23 @@ int main( int argc , char** argv )
 
 	senkou.displayTeam();
 	koukou.displayTeam();
+
+	const bool senkou_cost_over = (senkou.Cost() > MAX_COST);
+	const bool koukou_cost_over = (koukou.Cost() > MAX_COST);
+	if (senkou_cost_over || koukou_cost_over)
+	{
+		FILE* fp = fopen("result.txt", FO_W);
+
+		char buf[MAX_LENGTH] = {};
+		sprintf(buf, "<%s>\n%s\n", senkou.Name().c_str(), (senkou_cost_over) ? ("cost over") : ("win"));
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, "<%s>\n%s\n", koukou.Name().c_str(), (koukou_cost_over) ? ("cost over") : ("win"));
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+
+		fclose(fp);
+
+		return 0;
+	}
 
 	srand(static_cast<unsigned int>(time(NULL)));
 
