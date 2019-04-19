@@ -214,17 +214,16 @@ std::vector< std::string > SplitComma(const std::string& str)
 void
 Team::displayTeam()
 {
-    printf("Example Team\n");
-    unsigned int i;
-    for( i = 0u ; i < 9 ; i++ )
-    {
-        printf("%d#%s\n",
-            m_selectedBatterPlayers[i].id,
-            m_selectedBatterPlayers[i].name.c_str());
-    }
-    printf("%d#%s\n",
-        m_seletedPitcherPlayer.id,
-        m_seletedPitcherPlayer.name.c_str() );
+    printf("<%s>\n", m_teamName.c_str());
+
+	for (const auto& dat : m_selectedBatterPlayers)
+	{
+		printf("%d#%s, %u\n", dat.id, dat.name.c_str(), dat.cost);
+	}
+
+	printf("%d#%s, %u\n", m_seletedPitcherPlayer.id, m_seletedPitcherPlayer.name.c_str(), m_seletedPitcherPlayer.cost);
+
+	printf("TotalCost:%u\n", Cost());
 }
 
 /*
@@ -946,6 +945,9 @@ int main( int argc , char** argv )
 	{
 		return 1;
 	}
+
+	senkou.displayTeam();
+	koukou.displayTeam();
 
 	srand(static_cast<unsigned int>(time(NULL)));
 
