@@ -110,9 +110,27 @@ public :
 	Team();
 	virtual ~Team();
 
-	bool readBatterData(const std::string& data_file);
-	bool readPitcherData(const std::string& data_file);
-	bool readPlayer(const std::string& player_data);
+	bool Initialize(const std::string& team_data, const std::string& batter_data, const std::string& pitcher_data)
+	{
+		if (!readBatterData(batter_data))
+		{
+			return false;
+		}
+
+		if (!readPitcherData(pitcher_data))
+		{
+			return false;
+		}
+
+		if (!readPlayer(team_data))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+
 	void displayTeam();
 
 	const std::string& Name() const
@@ -144,6 +162,11 @@ public :
 	}
 	
 private:
+
+	bool readBatterData(const std::string& data_file);
+	bool readPitcherData(const std::string& data_file);
+	bool readPlayer(const std::string& player_data);
+
 	// チーム名
 	std::string m_teamName;
 	// ファイルから読み込んだ野手データ
@@ -913,43 +936,16 @@ int main( int argc , char** argv )
 	const std::string& pitcher_data = options[4];
 
 	Team senkou;	// 先攻チームデータ
+	if (!senkou.Initialize(bat_first_team, batter_data, pitcher_data))
+	{
+		return 1;
+	}
+
 	Team koukou;	// 後攻チームデータ
-
-    //printf("#野手データ読み込み\n");
-    if(!senkou.readBatterData(batter_data))
-    {
-        return 1;
-    }
-
-    // printf("#投手データ読み込み\n");
-    if(!senkou.readPitcherData(pitcher_data))
-    {
-        return 1;
-    }
-	
-    //printf("#野手データ読み込み\n");
-    if(!koukou.readBatterData(batter_data))
-    {
-        return 1;
-    }
-
-    // printf("#投手データ読み込み\n");
-    if(!koukou.readPitcherData(pitcher_data))
-    {
-        return 1;
-    }
-
-    //printf("#先行攻チームのデータ読み込み\n");
-    if(!senkou.readPlayer(bat_first_team))
-    {
-        return 1;
-    }
-
-    //printf("#後攻チームのデータ読み込み\n");
-    if(!koukou.readPlayer(bat_second_team))
-    {
-        return 1;
-    }
+	if (!koukou.Initialize(bat_second_team, batter_data, pitcher_data))
+	{
+		return 1;
+	}
 
 	srand(static_cast<unsigned int>(time(NULL)));
 
