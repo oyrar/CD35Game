@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <iterator>
 #include <map>
 #include <numeric>
 #include <sstream>
@@ -22,7 +23,7 @@ constexpr const char* DEFAULT_INPUT[] =
 };
 
 // ファイル一行の最大文字数
-constexpr size_t MAX_LENGTH = 256u;
+constexpr size_t MAX_LENGTH = 512u;
 // 1チームの最大コスト
 #define MAX_COST (100u)
 // 野手データ最大人数
@@ -113,6 +114,12 @@ public :
 	bool readPitcherData(const std::string& data_file);
 	bool readPlayer(const std::string& player_data);
 	void displayTeam();
+
+	const std::string& Name() const
+	{
+		return m_teamName;
+	}
+
 	int Gettokuten(void)
 	{
 		return tokuten;
@@ -125,18 +132,20 @@ public :
 		return tokuten;
 	}
 	
-	BatterData Batter( void )
+	const BatterData& Batter( void ) const
 	{
 		dajun = dajun % 9;
 		return m_selectedBatterPlayers[dajun++];
 	}
 	
-	PitcherData Pitcher( void )
+	const PitcherData& Pitcher( void ) const
 	{
 		return m_seletedPitcherPlayer;
 	}
 	
 private:
+	// チーム名
+	std::string m_teamName;
 	// ファイルから読み込んだ野手データ
 	std::map<unsigned int, BatterData> m_batterData;
 	// ファイルから読み込んだ投手データ
@@ -146,7 +155,7 @@ private:
 	// 選択した投手データ
 	PitcherData m_seletedPitcherPlayer;
 	int tokuten;
-	int dajun;
+	mutable int dajun;
 
 };
 
@@ -446,6 +455,24 @@ Team::readPlayer(const std::string& player_data)
     // 読み込みバッファ
     char buffer[MAX_LENGTH];
 
+	// 一行目はチーム名
+	{
+		if (NULL == fgets(buffer, sizeof(buffer) - 1, fp))
+		{
+			fprintf(stderr, "Team name gets err %s\n", player_data.c_str());
+
+			return false;
+		}
+
+		// 改行を除いて取得する
+		m_teamName = buffer;
+		m_teamName = std::string(
+			std::cbegin(m_teamName), std::find_if(
+				std::crbegin(m_teamName), std::crend(m_teamName), [](char c) -> bool {
+					return (c != '\n') && (c != '\r');
+				}).base());
+	}
+
     unsigned int i;
     for( i = 0u ; i < 10 ; i++)
     {
@@ -667,12 +694,17 @@ class TeamPlayData
 {
 public:
 
-	TeamPlayData() = default;
+	TeamPlayData(const std::string& name) : team_name_(name){}
 	TeamPlayData(const TeamPlayData&) = default;
 	TeamPlayData(TeamPlayData&&) noexcept = default;
 	TeamPlayData& operator=(const TeamPlayData&) = default;
 	TeamPlayData& operator=(TeamPlayData&&) noexcept = default;
 	~TeamPlayData() = default;
+
+	const std::string& TeamName() const
+	{
+		return team_name_;
+	}
 
 	// イニングの結果設定
 	void SetInningResult(int inning, const InningTeamPlayData& data)
@@ -726,7 +758,11 @@ public:
 
 private:
 
+	std::string team_name_;
+
 	std::array< InningTeamPlayData, MAX_INING_NUM > inning_data_{};	// 各イニングごとの結果
+
+	TeamPlayData() = delete;
 
 };
 
@@ -734,35 +770,49 @@ class PlayData
 {
 public:
 
-	PlayData() = default;
+	PlayData(const std::string& bat_first_team, const std::string& bat_second_team)
+		: bat_first_team_(bat_first_team)
+		, bat_second_team_(bat_second_team)
+	{
+	}
 	PlayData(const PlayData&) = default;
 	PlayData& operator=(const PlayData&) = default;
 	~PlayData() = default;
+
+	const std::string& Name() const
+	{
+		return name_;
+	}
 
 	void SetInningResultBatFirstTeam(int inning, const InningTeamPlayData& data) { return bat_first_team_.SetInningResult(inning, data); };
 	void SetInningResultBatFirstTeam(int inning, InningTeamPlayData&& data) { return bat_first_team_.SetInningResult(inning, std::move(data)); };
 	void SetInningResultBatSecondTeam(int inning, const InningTeamPlayData& data) { return bat_second_team_.SetInningResult(inning, data); };
 	void SetInningResultBatSecondTeam(int inning, InningTeamPlayData&& data) { return bat_second_team_.SetInningResult(inning, std::move(data)); };
 
+	// 試合結果出力 UTF-8の文字幅判定が面倒なのでチーム名は改行して出力
 	void PrintResult(FILE* fp) const
 	{
-		char buf[256] = {};
+		char buf[MAX_LENGTH] = {};
 		bool bat_first_team_win = (bat_first_team_.Runs() > bat_second_team_.Runs());
-		sprintf(buf, "1st:%s\n", (bat_first_team_win) ? ("win") : ("lose"));
+		sprintf(buf, "<%s>\n%s\n", bat_first_team_.TeamName().c_str(), ResultString(bat_first_team_.Runs(), bat_second_team_.Runs()).c_str());
 		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		sprintf(buf, "2nd:%s\n", (!bat_first_team_win) ? ("win") : ("lose"));
+		sprintf(buf, "<%s>\n%s\n", bat_second_team_.TeamName().c_str(), ResultString(bat_second_team_.Runs(), bat_first_team_.Runs()).c_str());
 		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		sprintf(buf, "1st %d - %d 2nd\n", bat_first_team_.Runs(), bat_second_team_.Runs());
+		sprintf(buf, "<%s> %d - %d <%s>\n", bat_first_team_.TeamName().c_str(), bat_first_team_.Runs(), bat_second_team_.Runs(), bat_second_team_.TeamName().c_str());
 		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
 	}
 
+	// 試合経過出力 UTF-8の文字幅判定が面倒なのでチーム名は改行して出力
 	void PrintGameProgress(FILE* fp, bool verbose) const
 	{
-		fprintf(stdout, "1st:"); fprintf(fp, "1st:");
+		char buf[MAX_LENGTH] = {};
+		sprintf(buf, "<%s>\n", bat_first_team_.TeamName().c_str());
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
 		bat_first_team_.PrintScoreBoard(fp);
 		fprintf(stdout, "\n"); fprintf(fp, "\n");
 
-		fprintf(stdout, "2nd:"); fprintf(fp, "1st:");
+		sprintf(buf, "<%s>\n", bat_second_team_.TeamName().c_str());
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
 		bat_second_team_.PrintScoreBoard(fp);
 		fprintf(stdout, "\n"); fprintf(fp, "\n");
 
@@ -771,16 +821,35 @@ public:
 			return;
 		}
 
-		fprintf(stdout, "1st\n"); fprintf(fp, "1st\n");
+		fprintf(stdout, "\n詳細\n"); fprintf(fp, "%s", buf);
+
+		sprintf(buf, "<%s>\n", bat_first_team_.TeamName().c_str());
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
 		bat_first_team_.PrintHitVerbose(fp);
-		fprintf(stdout, "\n2nd\n"); fprintf(fp, "\n2nd\n");
+		sprintf(buf, "<%s>\n", bat_second_team_.TeamName().c_str());
+		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
 		bat_second_team_.PrintHitVerbose(fp);
 	}
 
 private:
 
-	TeamPlayData bat_first_team_{};
-	TeamPlayData bat_second_team_{};
+	static std::string ResultString(int mine_runs, int opposition_runs)
+	{
+		if (mine_runs == opposition_runs)
+		{
+			return "even";
+		}
+		return (mine_runs > opposition_runs) ? ("win") : ("lose");
+	}
+
+private:
+
+	std::string name_;
+
+	TeamPlayData bat_first_team_;
+	TeamPlayData bat_second_team_;
+
+	PlayData() = delete;
 
 };
 
@@ -936,7 +1005,7 @@ bool IsInningFinishBatSecond(int inning, int first_run, int second_run)
 
 void PlayBall( Team &senkou, Team &koukou )
 {
-	PlayData play_data;
+	PlayData play_data(senkou.Name(), koukou.Name());
 
 	for (int inning = 0; inning < MAX_INING_NUM; ++inning)
 	{
