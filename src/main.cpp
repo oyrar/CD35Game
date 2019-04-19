@@ -26,17 +26,17 @@ constexpr size_t MAX_LENGTH = 256u;
 // 1チームの最大コスト
 #define MAX_COST (100u)
 // 野手データ最大人数
-constexpr const unsigned int MAX_BATTER_NUM = 65535u;
+constexpr unsigned int MAX_BATTER_NUM = 65535u;
 // 投手データ最大人数
-constexpr const unsigned int MAX_PITCHER_NUM = 65535u;
+constexpr unsigned int MAX_PITCHER_NUM = 65535u;
 // 一試合のイニング数
-constexpr const int INING_NUM =9;
+constexpr int INING_NUM =9;
 // 一試合の最大イニング数
-constexpr const int MAX_INING_NUM = 12;
+constexpr int MAX_INING_NUM = 12;
 // 延長イニング数
-constexpr const int ENTYOU_NUM = MAX_INING_NUM - INING_NUM;
+constexpr int ENTYOU_NUM = MAX_INING_NUM - INING_NUM;
 // アウト数
-constexpr const int OUT_NUM = 3;
+constexpr int OUT_NUM = 3;
 
 // fopenオプション
 constexpr const char* FO_W = "w";
