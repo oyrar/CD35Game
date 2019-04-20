@@ -897,8 +897,11 @@ public:
 			fprintf(fp, "\n");
 		}
 
-		fprintf(stdout, "\n");
-		fprintf(fp, "\n");
+		if (!batter_result_.empty())
+		{
+			fprintf(stdout, "\n");
+			fprintf(fp, "\n");
+		}
 	}
 
 	void SetRun(int run)
