@@ -7,6 +7,7 @@
 #include <cstring>
 #include <ctime>
 #include <iterator>
+#include <iomanip>
 #include <map>
 #include <numeric>
 #include <sstream>
@@ -668,8 +669,8 @@ public:
 				continue;
 			}
 
-			fprintf(stdout, "%02d回 %s %d塁打", inning, std::get<0>(i).name.c_str(), ButterHitResult(i));
-			fprintf(fp, "%02d回 %s %d塁打", inning, std::get<0>(i).name.c_str(), ButterHitResult(i));
+			fprintf(stdout, "%02d回 %s %s", inning, std::get<0>(i).name.c_str(), ButterHitResultString(i).c_str());
+			fprintf(fp, "%02d回 %s %s", inning, std::get<0>(i).name.c_str(), ButterHitResultString(i).c_str());
 
 			if (0 != ButterRunResult(i))
 			{
@@ -709,6 +710,22 @@ private:
 	inline static int ButterHitResult(const std::tuple< BatterData, int, int >& data)
 	{
 		return std::get<1>(data);
+	}
+
+	inline static std::string ButterHitResultString(const std::tuple< BatterData, int, int >& data)
+	{
+		std::stringstream ss;
+		const int hit = ButterHitResult(data);
+		if (hit >= 4)
+		{
+			ss << "本塁打";
+		}
+		else
+		{
+			ss << std::setw(2) << std::setfill('0') << hit << "塁打";
+		}
+
+		return ss.str();
 	}
 
 	inline static int ButterRunResult(const std::tuple< BatterData, int, int >& data)
