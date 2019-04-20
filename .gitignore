@@ -1,3 +1,7 @@
+# result file
+result.txt
+!result_sample/result.txt
+
 # included https://raw.githubusercontent.com/github/gitignore/master/C%2B%2B.gitignore
 
 # Prerequisites
