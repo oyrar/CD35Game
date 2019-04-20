@@ -175,7 +175,20 @@ public :
 private:
 
 	bool readBatterData(const std::string& data_file);
+
+	static std::pair< BatterData, bool > ConvertBatterDataOpenClass_(
+		const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields);
+	static std::pair< BatterData, bool > ConvertBatterDataBeginerClass_(
+		const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields);
+
+
 	bool readPitcherData(const std::string& data_file);
+
+	static std::pair< PitcherData, bool > ConvertPitcherDataOpenClass_(
+		const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields);
+	static std::pair< PitcherData, bool > ConvertPitcherDataBeginerClass_(
+		const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields);
+
 	bool readPlayer(const std::string& player_data);
 
 	// チーム名
@@ -261,113 +274,213 @@ Team::readBatterData(const std::string& data_file)
             break;
         }
 
-		auto fields = SplitComma(buffer);
+		constexpr size_t OPEN_FIELDS_NUM = 10;
+		constexpr size_t BEGINNER_FIELDS_NUM = 4;
 
-		constexpr size_t INDEX_ID = 0;
-		constexpr size_t INDEX_NAME = 1;
-		constexpr size_t INDEX_AVERAGE_HIT = 2;
-		constexpr size_t INDEX_AVERAGE_FIRST_BASE = 3;
-		constexpr size_t INDEX_AVERAGE_SECOND_BASE = 4;
-		constexpr size_t INDEX_AVERAGE_THIRD_BASE = 5;
-		constexpr size_t INDEX_COST = 9;
-		if (fields.size() < INDEX_COST)
+		const auto fields = SplitComma(buffer);
+		if ((fields.size() != OPEN_FIELDS_NUM) && (fields.size() != BEGINNER_FIELDS_NUM))
 		{
-			fprintf(stderr, "%s:%d missing fields %s\n", data_file.c_str(), i + 1, buffer);
+			fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), i + 1);
+			break;
+		}
+
+		const auto result = (fields.size() == OPEN_FIELDS_NUM)
+			? (ConvertBatterDataOpenClass_(data_file, i, fields))
+			: (ConvertBatterDataBeginerClass_(data_file, i, fields));
+
+		if (!result.second)
+		{
 			continue;
 		}
 
-        BatterData data;
-        // ID
-		try
-        {
-			data.id = std::stoul(fields[INDEX_ID]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_ID].c_str(), e.what());
-
-			continue;
-		}
-
-        // 名前
-		try
-        {
-            data.name = fields[INDEX_NAME];
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d name error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_NAME].c_str(), e.what());
-
-			continue;
-		}
-
-        // 打率
-		try
-        {
-			data.daritsu = std::stod(fields[INDEX_AVERAGE_HIT]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d daritsu error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
-
-			continue;
-		}
-
-        // 一塁打率
-		try
-        {
-			data.anda = std::stod(fields[INDEX_AVERAGE_FIRST_BASE]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d first base error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_FIRST_BASE].c_str(), e.what());
-
-			continue;
-		}
-
-    	// 二塁打率
-		try
-        {
-			data.niruida = data.anda + std::stod(fields[INDEX_AVERAGE_SECOND_BASE]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d second base error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_SECOND_BASE].c_str(), e.what());
-
-			continue;
-		}
-
-		// 三塁打率
-		try
-        {
-			data.sanruida = data.niruida + std::stod(fields[INDEX_AVERAGE_THIRD_BASE]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d 3rd base error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_THIRD_BASE].c_str(), e.what());
-
-			continue;
-		}
-
-        // コスト
-		try
-        {
-			data.cost = std::stoul(fields[INDEX_COST]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d cost error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_COST].c_str(), e.what());
-
-			continue;
-		}
-
-        m_batterData.insert(std::make_pair(data.id, data));
-
+		m_batterData.insert(std::make_pair(result.first.id, result.first));
     }
 
     fclose(fp);
 
     return true;
+}
+
+// 野手データ読み込み(オープン)
+std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields)
+{
+	std::pair< BatterData, bool > result = {{}, false};
+
+	constexpr size_t INDEX_ID = 0;
+	constexpr size_t INDEX_NAME = 1;
+	constexpr size_t INDEX_AVERAGE_HIT = 2;
+	constexpr size_t INDEX_AVERAGE_FIRST_BASE = 3;
+	constexpr size_t INDEX_AVERAGE_SECOND_BASE = 4;
+	constexpr size_t INDEX_AVERAGE_THIRD_BASE = 5;
+	constexpr size_t INDEX_COST = 9;
+
+	if (fields.size() < INDEX_COST)
+	{
+		fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), line_no + 1);
+		return result;
+	}
+
+	BatterData& data = result.first;
+	// ID
+	try
+	{
+		data.id = std::stoul(fields[INDEX_ID]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+
+		return result;
+	}
+
+	// 名前
+	try
+	{
+		data.name = fields[INDEX_NAME];
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
+
+		return result;
+	}
+
+	// 打率
+	try
+	{
+		data.daritsu = std::stod(fields[INDEX_AVERAGE_HIT]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
+
+		return result;
+	}
+
+	// 一塁打率
+	try
+	{
+		data.anda = std::stod(fields[INDEX_AVERAGE_FIRST_BASE]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d first base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_FIRST_BASE].c_str(), e.what());
+
+		return result;
+	}
+
+	// 二塁打率
+	try
+	{
+		data.niruida = data.anda + std::stod(fields[INDEX_AVERAGE_SECOND_BASE]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d second base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SECOND_BASE].c_str(), e.what());
+
+		return result;
+	}
+
+	// 三塁打率
+	try
+	{
+		data.sanruida = data.niruida + std::stod(fields[INDEX_AVERAGE_THIRD_BASE]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d 3rd base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_THIRD_BASE].c_str(), e.what());
+
+		return result;
+	}
+
+	// コスト
+	try
+	{
+		data.cost = std::stoul(fields[INDEX_COST]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+
+		return result;
+	}
+
+	result.second = true;
+	return result;
+}
+
+// 野手データ読み込み(ビギナー)
+std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields)
+{
+	std::pair< BatterData, bool > result = {{}, false};
+
+	constexpr size_t INDEX_ID = 0;
+	constexpr size_t INDEX_NAME = 1;
+	constexpr size_t INDEX_AVERAGE_HIT = 2;
+	constexpr size_t INDEX_COST = 3;
+
+	if (fields.size() <= INDEX_COST)
+	{
+		fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), line_no + 1);
+		return result;
+	}
+
+	BatterData& data = result.first;
+	// ID
+	try
+	{
+		data.id = std::stoul(fields[INDEX_ID]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+
+		return result;
+	}
+
+	// 名前
+	try
+	{
+		data.name = fields[INDEX_NAME];
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
+
+		return result;
+	}
+
+	// 打率
+	try
+	{
+		data.daritsu = std::stod(fields[INDEX_AVERAGE_HIT]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
+
+		return result;
+	}
+
+	// 塁打率(固定値)
+	data.anda = 0.25;
+	data.niruida = 0.25;
+	data.sanruida = 0.25;
+
+	// コスト
+	try
+	{
+		data.cost = std::stoul(fields[INDEX_COST]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+
+		return result;
+	}
+
+	result.second = true;
+	return result;
 }
 
 /*
@@ -396,79 +509,170 @@ Team::readPitcherData(const std::string& data_file)
             break;
         }
 
-		auto fields = SplitComma(buffer);
+		constexpr size_t OPEN_FIELDS_NUM = 8;
+		constexpr size_t BEGINNER_FIELDS_NUM = 4;
 
-		constexpr size_t INDEX_ID = 0;
-		constexpr size_t INDEX_NAME = 1;
-		constexpr size_t INDEX_AVERAGE_BOUGYO = 2;
-		constexpr size_t INDEX_AVERAGE_SIKYU = 3;
-		constexpr size_t INDEX_COST = 7;
-		if (fields.size() < INDEX_COST)
+		const auto fields = SplitComma(buffer);
+		if ((fields.size() != OPEN_FIELDS_NUM) && (fields.size() != BEGINNER_FIELDS_NUM))
 		{
 			fprintf(stderr, "%s:%d missing fields %s\n", data_file.c_str(), i + 1, buffer);
 			continue;
 		}
 
-        PitcherData data;
-        // ID
-        try
+		const auto result = (fields.size() == OPEN_FIELDS_NUM)
+			? (ConvertPitcherDataOpenClass_(data_file, i, fields))
+			: (ConvertPitcherDataBeginerClass_(data_file, i, fields));
+		if (!result.second)
 		{
-			data.id = std::stoul(fields[INDEX_ID]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_ID].c_str(), e.what());
-
 			continue;
 		}
 
-        // 名前
-        data.name = fields[INDEX_NAME];
-
-        // 防御率
-		try
-        {
-			const double bougyo = std::stod(fields[INDEX_AVERAGE_BOUGYO]);
-        	data.bougyoritsu = (0.0099 * bougyo * bougyo) - (0.039 * bougyo) + 0.2604;
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
-
-			continue;
-		}
-
-    	// 四球率
-		try
-        {
-			data.sikyuuritu = std::stod(fields[INDEX_AVERAGE_SIKYU]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d SIKJYUU error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_AVERAGE_SIKYU].c_str(), e.what());
-
-			continue;
-		}
-
-        // コスト
-		try
-        {
-			data.cost = std::stoul(fields[INDEX_COST]);
-        }
-		catch (std::exception& e)
-		{
-			fprintf(stderr, "%s:%d COST error->%s, %s\n", data_file.c_str(), i + 1, fields[INDEX_COST].c_str(), e.what());
-
-			continue;
-		}
-
-        m_pitcherData.insert(std::make_pair(data.id, data));
-
+        m_pitcherData.insert(std::make_pair(result.first.id, result.first));
     }
 
     fclose(fp);
 
     return true;
+}
+
+// 投手データ読み込み(オープン)
+std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
+	const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields)
+{
+	std::pair< PitcherData, bool > result = {{}, false};
+
+	constexpr size_t INDEX_ID = 0;
+	constexpr size_t INDEX_NAME = 1;
+	constexpr size_t INDEX_AVERAGE_BOUGYO = 2;
+	constexpr size_t INDEX_AVERAGE_SIKYU = 3;
+	constexpr size_t INDEX_COST = 7;
+	if (fields.size() <= INDEX_COST)
+	{
+		fprintf(stderr, "%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
+		return result;
+	}
+
+	PitcherData& data = result.first;
+	// ID
+	try
+	{
+		data.id = std::stoul(fields[INDEX_ID]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+
+		return result;
+	}
+
+	// 名前
+	data.name = fields[INDEX_NAME];
+
+	// 防御率
+	try
+	{
+		const double bougyo = std::stod(fields[INDEX_AVERAGE_BOUGYO]);
+		data.bougyoritsu = (0.0099 * bougyo * bougyo) - (0.039 * bougyo) + 0.2604;
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
+
+		return result;
+	}
+
+	// 四球率
+	try
+	{
+		data.sikyuuritu = std::stod(fields[INDEX_AVERAGE_SIKYU]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d SIKJYUU error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SIKYU].c_str(), e.what());
+
+		return result;
+	}
+
+	// コスト
+	try
+	{
+		data.cost = std::stoul(fields[INDEX_COST]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+
+		return result;
+	}
+
+	result.second = true;
+
+	return result;
+}
+
+// 投手データ読み込み(ビギナー)
+std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
+	const std::string& data_file, unsigned int line_no, const std::vector< std::string >& fields)
+{
+	std::pair< PitcherData, bool > result = {{}, false};
+
+	constexpr size_t INDEX_ID = 0;
+	constexpr size_t INDEX_NAME = 1;
+	constexpr size_t INDEX_AVERAGE_BOUGYO = 2;
+	constexpr size_t INDEX_COST = 3;
+	if (fields.size() <= INDEX_COST)
+	{
+		fprintf(stderr, "%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
+		return result;
+	}
+
+	PitcherData& data = result.first;
+	// ID
+	try
+	{
+		data.id = std::stoul(fields[INDEX_ID]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+
+		return result;
+	}
+
+	// 名前
+	data.name = fields[INDEX_NAME];
+
+	// 防御率
+	try
+	{
+		const double bougyo = std::stod(fields[INDEX_AVERAGE_BOUGYO]);
+		data.bougyoritsu = (0.0099 * bougyo * bougyo) - (0.039 * bougyo) + 0.2604;
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
+
+		return result;
+	}
+
+	// 四球率(固定値)
+	data.sikyuuritu = 0.015;
+
+	// コスト
+	try
+	{
+		data.cost = std::stoul(fields[INDEX_COST]);
+	}
+	catch (std::exception& e)
+	{
+		fprintf(stderr, "%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+
+		return result;
+	}
+
+	result.second = true;
+
+	return result;
 }
 
 /*
