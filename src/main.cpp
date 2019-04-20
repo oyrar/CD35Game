@@ -854,7 +854,7 @@ public:
 	size_t HitCount() const
 	{
 		return std::count_if(batter_result_.cbegin(), batter_result_.cend(), [](const std::tuple<BatterData, int, int>& v) -> bool {
-			return (0 != ButterHitResult(v));
+			return (0 != BatterHitResult(v));
 		});
 	}
 
@@ -868,7 +868,7 @@ public:
 	{
 		for (const auto& i : batter_result_)
 		{
-			if (ButterHitResult(i) == 0)
+			if (BatterHitResult(i) == 0)
 			{
 				continue;
 			}
@@ -878,15 +878,15 @@ public:
 			fprintf(fp, "%s", prefix.c_str());
 
 			// 塁打/得点
-			if (0 != ButterRunResult(i))
+			if (0 != BatterRunResult(i))
 			{
-				fprintf(stdout, "\t%s %2d点", ButterHitResultString(i).c_str(), ButterRunResult(i));
-				fprintf(fp, "\t%s %2d点", ButterHitResultString(i).c_str(), ButterRunResult(i));
+				fprintf(stdout, "\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
+				fprintf(fp, "\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
 			}
 			else
 			{
-				fprintf(stdout, "\t%s %*s", ButterHitResultString(i).c_str(), 4, "");
-				fprintf(fp, "\t%s %*s", ButterHitResultString(i).c_str(), 4, "");
+				fprintf(stdout, "\t%s %*s", BatterHitResultString(i).c_str(), 4, "");
+				fprintf(fp, "\t%s %*s", BatterHitResultString(i).c_str(), 4, "");
 			}
 
 			// 選手名(utf-8の文字幅対応が面倒なので末尾にもっていく)
@@ -926,15 +926,15 @@ public:
 
 private:
 
-	inline static int ButterHitResult(const std::tuple< BatterData, int, int >& data)
+	inline static int BatterHitResult(const std::tuple< BatterData, int, int >& data)
 	{
 		return std::get<1>(data);
 	}
 
-	inline static std::string ButterHitResultString(const std::tuple< BatterData, int, int >& data)
+	inline static std::string BatterHitResultString(const std::tuple< BatterData, int, int >& data)
 	{
 		std::stringstream ss;
-		const int hit = ButterHitResult(data);
+		const int hit = BatterHitResult(data);
 		if (hit >= 4)
 		{
 			ss << "本塁打";
@@ -947,7 +947,7 @@ private:
 		return ss.str();
 	}
 
-	inline static int ButterRunResult(const std::tuple< BatterData, int, int >& data)
+	inline static int BatterRunResult(const std::tuple< BatterData, int, int >& data)
 	{
 		return std::get<2>(data);
 	}
