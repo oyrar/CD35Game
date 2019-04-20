@@ -793,6 +793,8 @@ int Base::Hit( int hit )
 {
 	int tokuten = 0;
 	
+	m_Base[0] = true; // 打者BOXは常にtrue
+	
 	// 出塁済みの選手をヒット結果数分進塁させる
 	for( int i = 4 - 1 ; i >= 0 ; i-- )
 	{
@@ -815,8 +817,6 @@ int Base::Hit( int hit )
 			}
 		}
 	}
-	
-	m_Base[0] = true; // 打者BOXは常にtrue
 	
 	return tokuten;
 }
