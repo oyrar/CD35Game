@@ -660,7 +660,7 @@ public:
 	}
 
 	// ヒット情報詳細
-	void PrintHitVerbose(FILE* fp, int inning) const
+	void PrintHitVerbose(FILE* fp, const std::string& prefix) const
 	{
 		for (const auto& i : batter_result_)
 		{
@@ -669,20 +669,32 @@ public:
 				continue;
 			}
 
-			fprintf(stdout, "%02d回 %s %s", inning, std::get<0>(i).name.c_str(), ButterHitResultString(i).c_str());
-			fprintf(fp, "%02d回 %s %s", inning, std::get<0>(i).name.c_str(), ButterHitResultString(i).c_str());
+			// イニング
+			fprintf(stdout, "%s", prefix.c_str());
+			fprintf(fp, "%s", prefix.c_str());
 
+			// 塁打/得点
 			if (0 != ButterRunResult(i))
 			{
-				fprintf(stdout, "%4d 点\n", ButterRunResult(i));
-				fprintf(fp, "%d 点\n", ButterRunResult(i));
+				fprintf(stdout, "\t%s %2d点", ButterHitResultString(i).c_str(), ButterRunResult(i));
+				fprintf(fp, "\t%s %2d点", ButterHitResultString(i).c_str(), ButterRunResult(i));
 			}
 			else
 			{
-				fprintf(stdout, "\n");
-				fprintf(fp, "\n");
+				fprintf(stdout, "\t%s %*s", ButterHitResultString(i).c_str(), 4, "");
+				fprintf(fp, "\t%s %*s", ButterHitResultString(i).c_str(), 4, "");
 			}
+
+			// 選手名(utf-8の文字幅対応が面倒なので末尾にもっていく)
+			fprintf(stdout, " %s", std::get<0>(i).name.c_str());
+			fprintf(fp, " %s", std::get<0>(i).name.c_str());
+
+			fprintf(stdout, "\n");
+			fprintf(fp, "\n");
 		}
+
+		fprintf(stdout, "\n");
+		fprintf(fp, "\n");
 	}
 
 	void SetRun(int run)
@@ -722,7 +734,7 @@ private:
 		}
 		else
 		{
-			ss << std::setw(2) << std::setfill('0') << hit << "塁打";
+			ss << std::setw(2) << std::setfill(' ') << hit << "塁打";
 		}
 
 		return ss.str();
@@ -790,19 +802,16 @@ public:
 		});
 	}
 
-	// ヒット情報プリント
-	void PrintHitVerbose(FILE* fp) const
+	// ヒット情報プリント(イニングごと)
+	void PrintInningHitVerbose(FILE* fp, int inning, const std::string& prefix) const
 	{
-		for (int i = 0; i < MAX_INING_NUM; ++i)
+		const InningTeamPlayData& data = inning_data_[inning];
+		if (!data.IsValid())
 		{
-			const InningTeamPlayData& data = inning_data_[i];
-			if (!data.IsValid())
-			{
-				break;
-			}
-
-			data.PrintHitVerbose(fp, i + 1);
+			return;
 		}
+
+		data.PrintHitVerbose(fp, prefix);
 	}
 
 private:
@@ -854,6 +863,7 @@ public:
 	// 試合経過出力 UTF-8の文字幅判定が面倒なのでチーム名は改行して出力
 	void PrintGameProgress(FILE* fp, bool verbose) const
 	{
+		// スコアボード表示
 		char buf[MAX_LENGTH] = {};
 		sprintf(buf, "<%s>\n", bat_first_team_.TeamName().c_str());
 		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
@@ -870,14 +880,17 @@ public:
 			return;
 		}
 
+		// イニングごとのヒット
 		fprintf(stdout, "\n詳細\n"); fprintf(fp, "%s", buf);
 
-		sprintf(buf, "<%s>\n", bat_first_team_.TeamName().c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		bat_first_team_.PrintHitVerbose(fp);
-		sprintf(buf, "<%s>\n", bat_second_team_.TeamName().c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		bat_second_team_.PrintHitVerbose(fp);
+		for (int i = 0; i < MAX_INING_NUM; ++i)
+		{
+			std::stringstream ss;
+			ss << std::setw(2) << std::setfill('0') << (i + 1) << "回";
+			bat_first_team_.PrintInningHitVerbose(fp, i, ss.str() + "表");
+			bat_second_team_.PrintInningHitVerbose(fp, i, ss.str() + "裏");
+		}
+
 	}
 
 private:
