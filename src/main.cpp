@@ -43,7 +43,7 @@ constexpr int OUT_NUM = 3;
 // fopenオプション
 constexpr const char* FO_W = "w";
 //constexpr const char* FO_W = "w,ccs=UTF-8";
-constexpr const char* FO_R = "r";
+constexpr const char* FO_R = "rb";
 //constexpr const char* FO_R = "r,ccs=UTF-8";
 
 // = BatterData
@@ -238,16 +238,16 @@ std::vector< std::string > SplitComma(const std::string& str)
 void
 Team::displayTeam()
 {
-    printf("<%s>\n", m_teamName.c_str());
+    printf(u8"<%s>\n", m_teamName.c_str());
 
 	for (const auto& dat : m_selectedBatterPlayers)
 	{
-		printf("%d#%s, %u\n", dat.id, dat.name.c_str(), dat.cost);
+		printf(u8"%d#%s, %u\n", dat.id, dat.name.c_str(), dat.cost);
 	}
 
-	printf("%d#%s, %u\n", m_seletedPitcherPlayer.id, m_seletedPitcherPlayer.name.c_str(), m_seletedPitcherPlayer.cost);
+	printf(u8"%d#%s, %u\n", m_seletedPitcherPlayer.id, m_seletedPitcherPlayer.name.c_str(), m_seletedPitcherPlayer.cost);
 
-	printf("TotalCost:%u\n", Cost());
+	printf(u8"TotalCost:%u\n", Cost());
 }
 
 /*
@@ -260,7 +260,7 @@ Team::readBatterData(const std::string& data_file)
     if( NULL == fp )
     {
         // 読み込み失敗
-        fprintf(stderr, "fopen err %s\n", data_file.c_str());
+        fprintf(stderr, u8"fopen err %s\n", data_file.c_str());
         return false;
     }
 
@@ -280,7 +280,7 @@ Team::readBatterData(const std::string& data_file)
 		const auto fields = SplitComma(buffer);
 		if ((fields.size() != OPEN_FIELDS_NUM) && (fields.size() != BEGINNER_FIELDS_NUM))
 		{
-			fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), i + 1);
+			fprintf(stderr, u8"%s:%d missing fields\n", data_file.c_str(), i + 1);
 			break;
 		}
 
@@ -316,7 +316,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 
 	if (fields.size() < INDEX_COST)
 	{
-		fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), line_no + 1);
+		fprintf(stderr, u8"%s:%d missing fields\n", data_file.c_str(), line_no + 1);
 		return result;
 	}
 
@@ -328,7 +328,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
 
 		return result;
 	}
@@ -340,7 +340,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
 
 		return result;
 	}
@@ -352,7 +352,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
 
 		return result;
 	}
@@ -364,7 +364,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d first base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_FIRST_BASE].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d first base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_FIRST_BASE].c_str(), e.what());
 
 		return result;
 	}
@@ -376,7 +376,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d second base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SECOND_BASE].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d second base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SECOND_BASE].c_str(), e.what());
 
 		return result;
 	}
@@ -388,7 +388,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d 3rd base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_THIRD_BASE].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d 3rd base error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_THIRD_BASE].c_str(), e.what());
 
 		return result;
 	}
@@ -400,7 +400,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
 
 		return result;
 	}
@@ -421,7 +421,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::st
 
 	if (fields.size() <= INDEX_COST)
 	{
-		fprintf(stderr, "%s:%d missing fields\n", data_file.c_str(), line_no + 1);
+		fprintf(stderr, u8"%s:%d missing fields\n", data_file.c_str(), line_no + 1);
 		return result;
 	}
 
@@ -433,7 +433,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::st
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
 
 		return result;
 	}
@@ -445,7 +445,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::st
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d name error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_NAME].c_str(), e.what());
 
 		return result;
 	}
@@ -457,7 +457,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::st
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d daritsu error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_HIT].c_str(), e.what());
 
 		return result;
 	}
@@ -474,7 +474,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataBeginerClass_(const std::st
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d cost error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
 
 		return result;
 	}
@@ -493,7 +493,7 @@ Team::readPitcherData(const std::string& data_file)
     if( NULL == fp )
     {
         // 読み込み失敗
-        fprintf(stderr, "fopen err %s\n", data_file.c_str());
+        fprintf(stderr, u8"fopen err %s\n", data_file.c_str());
         return false;
     }
 
@@ -515,7 +515,7 @@ Team::readPitcherData(const std::string& data_file)
 		const auto fields = SplitComma(buffer);
 		if ((fields.size() != OPEN_FIELDS_NUM) && (fields.size() != BEGINNER_FIELDS_NUM))
 		{
-			fprintf(stderr, "%s:%d missing fields %s\n", data_file.c_str(), i + 1, buffer);
+			fprintf(stderr, u8"%s:%d missing fields %s\n", data_file.c_str(), i + 1, buffer);
 			continue;
 		}
 
@@ -548,7 +548,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	constexpr size_t INDEX_COST = 7;
 	if (fields.size() <= INDEX_COST)
 	{
-		fprintf(stderr, "%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
+		fprintf(stderr, u8"%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
 		return result;
 	}
 
@@ -560,7 +560,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
 
 		return result;
 	}
@@ -576,7 +576,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
 
 		return result;
 	}
@@ -588,7 +588,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d SIKJYUU error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SIKYU].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d SIKJYUU error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_SIKYU].c_str(), e.what());
 
 		return result;
 	}
@@ -600,7 +600,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
 
 		return result;
 	}
@@ -622,7 +622,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
 	constexpr size_t INDEX_COST = 3;
 	if (fields.size() <= INDEX_COST)
 	{
-		fprintf(stderr, "%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
+		fprintf(stderr, u8"%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
 		return result;
 	}
 
@@ -634,7 +634,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d ID error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_ID].c_str(), e.what());
 
 		return result;
 	}
@@ -650,7 +650,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d BOUGYO error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_AVERAGE_BOUGYO].c_str(), e.what());
 
 		return result;
 	}
@@ -665,7 +665,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
 	}
 	catch (std::exception& e)
 	{
-		fprintf(stderr, "%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
+		fprintf(stderr, u8"%s:%d COST error->%s, %s\n", data_file.c_str(), line_no + 1, fields[INDEX_COST].c_str(), e.what());
 
 		return result;
 	}
@@ -685,7 +685,7 @@ Team::readPlayer(const std::string& player_data)
     if( NULL == fp )
     {
         // 読み込み失敗
-        fprintf(stderr, "fopen err %s\n", player_data.c_str());
+        fprintf(stderr, u8"fopen err %s\n", player_data.c_str());
         return false;
     }
 
@@ -696,7 +696,7 @@ Team::readPlayer(const std::string& player_data)
 	{
 		if (NULL == fgets(buffer, sizeof(buffer) - 1, fp))
 		{
-			fprintf(stderr, "Team name gets err %s\n", player_data.c_str());
+			fprintf(stderr, u8"Team name gets err %s\n", player_data.c_str());
 
 			return false;
 		}
@@ -731,10 +731,10 @@ Team::readPlayer(const std::string& player_data)
         PitcherData data;
         // ID
         {
-            char* tok = strtok(buffer, ",");
+            char* tok = strtok(buffer, u8",");
             if( NULL == tok )
             {
-                fprintf(stderr, "analysis error %d\n", __LINE__);
+                fprintf(stderr, u8"analysis error %d\n", __LINE__);
                 continue;
             }
 
@@ -743,8 +743,8 @@ Team::readPlayer(const std::string& player_data)
 
         	
     	    if (*e != '\0') {
-        		fprintf(stderr, "%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, "%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
+        		fprintf(stderr, u8"%d:変換不可能部分＝%s\n", __LINE__, e);
+    	    	fprintf(stderr, u8"%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
     	    	continue;
     	    }
 
@@ -874,33 +874,33 @@ public:
 			}
 
 			// イニング
-			fprintf(stdout, "%s", prefix.c_str());
-			fprintf(fp, "%s", prefix.c_str());
+			fprintf(stdout, u8"%s", prefix.c_str());
+			fprintf(fp, u8"%s", prefix.c_str());
 
 			// 塁打/得点
 			if (0 != BatterRunResult(i))
 			{
-				fprintf(stdout, "\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
-				fprintf(fp, "\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
+				fprintf(stdout, u8"\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
+				fprintf(fp, u8"\t%s %2d点", BatterHitResultString(i).c_str(), BatterRunResult(i));
 			}
 			else
 			{
-				fprintf(stdout, "\t%s %*s", BatterHitResultString(i).c_str(), 4, "");
-				fprintf(fp, "\t%s %*s", BatterHitResultString(i).c_str(), 4, "");
+				fprintf(stdout, u8"\t%s %*s", BatterHitResultString(i).c_str(), 4, u8"");
+				fprintf(fp, u8"\t%s %*s", BatterHitResultString(i).c_str(), 4, u8"");
 			}
 
 			// 選手名(utf-8の文字幅対応が面倒なので末尾にもっていく)
-			fprintf(stdout, " %s", std::get<0>(i).name.c_str());
-			fprintf(fp, " %s", std::get<0>(i).name.c_str());
+			fprintf(stdout, u8" %s", std::get<0>(i).name.c_str());
+			fprintf(fp, u8" %s", std::get<0>(i).name.c_str());
 
-			fprintf(stdout, "\n");
-			fprintf(fp, "\n");
+			fprintf(stdout, u8"\n");
+			fprintf(fp, u8"\n");
 		}
 
 		if (!batter_result_.empty())
 		{
-			fprintf(stdout, "\n");
-			fprintf(fp, "\n");
+			fprintf(stdout, u8"\n");
+			fprintf(fp, u8"\n");
 		}
 	}
 
@@ -937,11 +937,11 @@ private:
 		const int hit = BatterHitResult(data);
 		if (hit >= 4)
 		{
-			ss << "本塁打";
+			ss << u8"本塁打";
 		}
 		else
 		{
-			ss << std::setw(2) << std::setfill(' ') << hit << "塁打";
+			ss << std::setw(2) << std::setfill(' ') << hit << u8"塁打";
 		}
 
 		return ss.str();
@@ -998,13 +998,13 @@ public:
 		std::for_each(std::cbegin(inning_data_), std::cend(inning_data_), [fp](const InningTeamPlayData& data) -> void {
 			if (data.IsValid())
 			{
-				fprintf(stdout, "%4d", data.Run());
-				fprintf(fp, "%4d", data.Run());
+				fprintf(stdout, u8"%4d", data.Run());
+				fprintf(fp, u8"%4d", data.Run());
 			}
 			else
 			{
-				fprintf(stdout, "%4s", "x");
-				fprintf(fp, "%4s", "x");
+				fprintf(stdout, u8"%4s", u8"x");
+				fprintf(fp, u8"%4s", u8"x");
 			}
 		});
 	}
@@ -1059,12 +1059,12 @@ public:
 	{
 		char buf[MAX_LENGTH] = {};
 		bool bat_first_team_win = (bat_first_team_.Runs() > bat_second_team_.Runs());
-		sprintf(buf, "<%s>\n%s\n", bat_first_team_.TeamName().c_str(), ResultString(bat_first_team_.Runs(), bat_second_team_.Runs()).c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		sprintf(buf, "<%s>\n%s\n", bat_second_team_.TeamName().c_str(), ResultString(bat_second_team_.Runs(), bat_first_team_.Runs()).c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		sprintf(buf, "<%s> %d - %d <%s>\n", bat_first_team_.TeamName().c_str(), bat_first_team_.Runs(), bat_second_team_.Runs(), bat_second_team_.TeamName().c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, u8"<%s>\n%s\n", bat_first_team_.TeamName().c_str(), ResultString(bat_first_team_.Runs(), bat_second_team_.Runs()).c_str());
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
+		sprintf(buf, u8"<%s>\n%s\n", bat_second_team_.TeamName().c_str(), ResultString(bat_second_team_.Runs(), bat_first_team_.Runs()).c_str());
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
+		sprintf(buf, u8"<%s> %d - %d <%s>\n", bat_first_team_.TeamName().c_str(), bat_first_team_.Runs(), bat_second_team_.Runs(), bat_second_team_.TeamName().c_str());
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
 	}
 
 	// 試合経過出力 UTF-8の文字幅判定が面倒なのでチーム名は改行して出力
@@ -1072,15 +1072,15 @@ public:
 	{
 		// スコアボード表示
 		char buf[MAX_LENGTH] = {};
-		sprintf(buf, "<%s>\n", bat_first_team_.TeamName().c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, u8"<%s>\n", bat_first_team_.TeamName().c_str());
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
 		bat_first_team_.PrintScoreBoard(fp);
-		fprintf(stdout, "\n"); fprintf(fp, "\n");
+		fprintf(stdout, u8"\n"); fprintf(fp, u8"\n");
 
-		sprintf(buf, "<%s>\n", bat_second_team_.TeamName().c_str());
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, u8"<%s>\n", bat_second_team_.TeamName().c_str());
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
 		bat_second_team_.PrintScoreBoard(fp);
-		fprintf(stdout, "\n"); fprintf(fp, "\n");
+		fprintf(stdout, u8"\n"); fprintf(fp, u8"\n");
 
 		if (!verbose)
 		{
@@ -1088,14 +1088,14 @@ public:
 		}
 
 		// イニングごとのヒット
-		fprintf(stdout, "\n詳細\n"); fprintf(fp, "%s", buf);
+		fprintf(stdout, u8"\n詳細\n"); fprintf(fp, u8"\n詳細\n");
 
 		for (int i = 0; i < MAX_INING_NUM; ++i)
 		{
 			std::stringstream ss;
-			ss << std::setw(2) << std::setfill('0') << (i + 1) << "回";
-			bat_first_team_.PrintInningHitVerbose(fp, i, ss.str() + "表");
-			bat_second_team_.PrintInningHitVerbose(fp, i, ss.str() + "裏");
+			ss << std::setw(2) << std::setfill('0') << (i + 1) << u8"回";
+			bat_first_team_.PrintInningHitVerbose(fp, i, ss.str() + u8"表");
+			bat_second_team_.PrintInningHitVerbose(fp, i, ss.str() + u8"裏");
 		}
 
 	}
@@ -1106,9 +1106,9 @@ private:
 	{
 		if (mine_runs == opposition_runs)
 		{
-			return "even";
+			return u8"even";
 		}
-		return (mine_runs > opposition_runs) ? ("win") : ("lose");
+		return (mine_runs > opposition_runs) ? (u8"win") : (u8"lose");
 	}
 
 private:
@@ -1155,11 +1155,11 @@ std::vector< std::string > OptStore(int argc, char** argv)
 		return  result;
 	}
 
-	fprintf(stderr, "usage %s [先攻チーム選手データ 後攻チーム選手データ 野手データ 投手データ]\n", argv[0]);
-	fprintf(stderr, "省略時 先攻チーム選手データ:%s\n", DEFAULT_INPUT[0]);
-	fprintf(stderr, "       後攻チーム選手データ:%s\n", DEFAULT_INPUT[1]);
-	fprintf(stderr, "       野手データ:%s\n", DEFAULT_INPUT[2]);
-	fprintf(stderr, "       投手データ:%s\n", DEFAULT_INPUT[3]);
+	fprintf(stderr, u8"usage %s [先攻チーム選手データ 後攻チーム選手データ 野手データ 投手データ]\n", argv[0]);
+	fprintf(stderr, u8"省略時 先攻チーム選手データ:%s\n", DEFAULT_INPUT[0]);
+	fprintf(stderr, u8"       後攻チーム選手データ:%s\n", DEFAULT_INPUT[1]);
+	fprintf(stderr, u8"       野手データ:%s\n", DEFAULT_INPUT[2]);
+	fprintf(stderr, u8"       投手データ:%s\n", DEFAULT_INPUT[3]);
 
 	return result;
 }
@@ -1168,6 +1168,7 @@ void PlayBall( Team &senkou, Team &koukou );
 
 int main( int argc , char** argv )
 {
+	setlocale(LC_ALL, "ja_JP.utf-8");
 
 	// コマンドオプション
 	const std::vector< std::string > options(OptStore(argc, argv));
@@ -1203,10 +1204,10 @@ int main( int argc , char** argv )
 		FILE* fp = fopen("result.txt", FO_W);
 
 		char buf[MAX_LENGTH] = {};
-		sprintf(buf, "<%s>\n%s\n", senkou.Name().c_str(), (senkou_cost_over) ? ("cost over") : ("win"));
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
-		sprintf(buf, "<%s>\n%s\n", koukou.Name().c_str(), (koukou_cost_over) ? ("cost over") : ("win"));
-		fprintf(stdout, "%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, u8"<%s>\n%s\n", senkou.Name().c_str(), (senkou_cost_over) ? (u8"cost over") : (u8"win"));
+		fprintf(stdout, u8"%s", buf); fprintf(fp, "%s", buf);
+		sprintf(buf, u8"<%s>\n%s\n", koukou.Name().c_str(), (koukou_cost_over) ? (u8"cost over") : (u8"win"));
+		fprintf(stdout, u8"%s", buf); fprintf(fp, u8"%s", buf);
 
 		fclose(fp);
 
