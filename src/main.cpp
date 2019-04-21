@@ -723,63 +723,53 @@ Team::readPlayer(const std::string& player_data)
 			return false;
         }
 
-        if( '\r' == buffer[strlen(buffer) - 2]  )
-        {
-            buffer[strlen(buffer) - 2] = '\0';
-        }
-        else if('\n' == buffer[strlen(buffer) - 1] )
-        {
-            buffer[strlen(buffer) - 1] = '\0';
-        }
+		// 改行を除いて取得する
+		const std::string tmp_buffer = buffer;
+		const std::string line = std::string(
+			tmp_buffer.cbegin(), std::find_if(
+				tmp_buffer.crbegin(), tmp_buffer.crend(), [](char c) -> bool {
+					return (c != '\n') && (c != '\r');
+				}).base());
 
-        PitcherData data;
-        // ID
-        {
-            char* tok = strtok(buffer, u8",");
-            if( NULL == tok )
-            {
-                fprintf(stderr, u8"analysis error %d\n", __LINE__);
-                continue;
-            }
+		unsigned int id = 0;
+		try
+		{
+			id = std::stoul(line);
+		}
+		catch (std::exception& e)
+		{
+			fprintf(stderr, u8"%s:%d 数値変換エラー:%s\n",
+				player_data.c_str(), i + 2, line.c_str());
 
-            char *e;
-        	const unsigned int id = (unsigned int)strtoul(tok, &e, 10);
+			return false;
+		}
 
-        	
-    	    if (*e != '\0') {
-        		fprintf(stderr, u8"%d:変換不可能部分＝%s\n", __LINE__, e);
-    	    	fprintf(stderr, u8"%d:%" PRIuPTR "文字目の\'%c\'が変換不可\n", __LINE__, e-tok+1, *e);
-    	    	continue;
-    	    }
-
-			try
+		try
+		{
+			if( 9 == i )
 			{
-				if( 9 == i )
-				{
-					// 投手
-					m_seletedPitcherPlayer = m_pitcherData.at(id);
-				}
-				else
-				{
-					// 野手
-					if (0 != std::count_if(
-							m_selectedBatterPlayers.cbegin(), m_selectedBatterPlayers.cend(), [id](const BatterData& data){
-								return (data.id == id);
-							}))
-					{
-						fprintf(stderr, u8"%s:%d ID:%dが重複しています", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
-						return false;
-					}
-					m_selectedBatterPlayers.push_back(m_batterData.at(id));
-				}
+				// 投手
+				m_seletedPitcherPlayer = m_pitcherData.at(id);
 			}
-			catch (std::out_of_range& e)
+			else
 			{
-				fprintf(stderr, u8"%s:%d ID:%dは存在しません\n", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
-				return false;
+				// 野手
+				if (0 != std::count_if(
+						m_selectedBatterPlayers.cbegin(), m_selectedBatterPlayers.cend(), [id](const BatterData& data){
+							return (data.id == id);
+						}))
+				{
+					fprintf(stderr, u8"%s:%d ID:%dが重複しています", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
+					return false;
+				}
+				m_selectedBatterPlayers.push_back(m_batterData.at(id));
 			}
-        }
-
+		}
+		catch (std::out_of_range& e)
+		{
+			fprintf(stderr, u8"%s:%d ID:%dは存在しません\n", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
+			return false;
+		}
 
     }
 
