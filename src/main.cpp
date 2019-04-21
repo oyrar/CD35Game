@@ -704,8 +704,8 @@ Team::readPlayer(const std::string& player_data)
 		// 改行を除いて取得する
 		m_teamName = buffer;
 		m_teamName = std::string(
-			std::cbegin(m_teamName), std::find_if(
-				std::crbegin(m_teamName), std::crend(m_teamName), [](char c) -> bool {
+			m_teamName.cbegin(), std::find_if(
+				m_teamName.crbegin(), m_teamName.crend(), [](char c) -> bool {
 					return (c != '\n') && (c != '\r');
 				}).base());
 	}
@@ -987,7 +987,7 @@ public:
 	// 得点取得
 	int Runs() const
 	{
-		return std::accumulate(std::cbegin(inning_data_), std::cend(inning_data_), 0, [](int val, const InningTeamPlayData& data) -> int {
+		return std::accumulate(inning_data_.cbegin(), inning_data_.cend(), 0, [](int val, const InningTeamPlayData& data) -> int {
 			return val + data.Run();
 		});
 	}
@@ -995,7 +995,7 @@ public:
 	// スコアボードプリント
 	void PrintScoreBoard(FILE* fp) const
 	{
-		std::for_each(std::cbegin(inning_data_), std::cend(inning_data_), [fp](const InningTeamPlayData& data) -> void {
+		std::for_each(inning_data_.cbegin(), inning_data_.cend(), [fp](const InningTeamPlayData& data) -> void {
 			if (data.IsValid())
 			{
 				fprintf(stdout, u8"%4d", data.Run());

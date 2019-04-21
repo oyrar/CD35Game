@@ -10,7 +10,7 @@ TARGET=play.exe
 CC=g++
 CXX=$CC
 LD=g++
-CPPFLAGS=--std=c++17 -MMD -MP
+CPPFLAGS=--std=c++11 -MMD -MP
 LDFLAGS=
 
 main.o: main.cpp
