@@ -677,6 +677,8 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataBeginerClass_(
 
 /*
  * 選択選手データ読み込み
+ *
+ * @attention 野手データ、投手データ読み込み後に実行する
  */
 bool
 Team::readPlayer(const std::string& player_data)
@@ -716,7 +718,9 @@ Team::readPlayer(const std::string& player_data)
         // 一行読み込み
         memset(buffer, 0, sizeof(buffer));
         if (NULL == fgets(buffer, sizeof(buffer)-1, fp)) {
-            break;
+            fprintf(stderr, u8"入力ファイルの行数(%d)が不足しています。入力ファイルはチーム名+バッター9+ピッチャー1の11行必要です\n", (i - 1) + 2 /* 現在読もうとした行をマイナス、タイトル行と0オリジンから1オリジンへの変換の+2*/);
+
+			return false;
         }
 
         if( '\r' == buffer[strlen(buffer) - 2]  )
@@ -748,16 +752,24 @@ Team::readPlayer(const std::string& player_data)
     	    	continue;
     	    }
 
-        	if( 9 == i )
-        	{
-        		// 投手はIDから2000引く
-		        m_seletedPitcherPlayer = m_pitcherData[id];
-        	}
-        	else
-        	{
-        		// 野手はIDから2000引く
-		        m_selectedBatterPlayers.push_back(m_batterData[id]);
-        	}
+			try
+			{
+				if( 9 == i )
+				{
+					// 投手
+					m_seletedPitcherPlayer = m_pitcherData.at(id);
+				}
+				else
+				{
+					// 野手
+					m_selectedBatterPlayers.push_back(m_batterData.at(id));
+				}
+			}
+			catch (std::out_of_range& e)
+			{
+				fprintf(stderr, u8"%s:%d ID:%dは存在しません\n", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
+				return false;
+			}
         }
 
 
