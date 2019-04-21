@@ -718,7 +718,7 @@ Team::readPlayer(const std::string& player_data)
         // 一行読み込み
         memset(buffer, 0, sizeof(buffer));
         if (NULL == fgets(buffer, sizeof(buffer)-1, fp)) {
-            fprintf(stderr, u8"入力ファイルの行数(%d)が不足しています。入力ファイルはチーム名+バッター9+ピッチャー1の11行必要です\n", (i - 1) + 2 /* 現在読もうとした行をマイナス、タイトル行と0オリジンから1オリジンへの変換の+2*/);
+            fprintf(stderr, u8"入力ファイルの行数(%d)が不足しています。入力ファイルはチーム名+バッター9+ピッチャー1の11行必要です\n", (i - 1) + 2 /* 現在読もうとした行を、タイトル行と0オリジンから1オリジンへの変換の+2*/);
 
 			return false;
         }
@@ -762,6 +762,14 @@ Team::readPlayer(const std::string& player_data)
 				else
 				{
 					// 野手
+					if (0 != std::count_if(
+							m_selectedBatterPlayers.cbegin(), m_selectedBatterPlayers.cend(), [id](const BatterData& data){
+								return (data.id == id);
+							}))
+					{
+						fprintf(stderr, u8"%s:%d ID:%dが重複しています", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
+						return false;
+					}
 					m_selectedBatterPlayers.push_back(m_batterData.at(id));
 				}
 			}
