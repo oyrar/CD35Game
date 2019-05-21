@@ -274,7 +274,7 @@ Team::readBatterData(const std::string& data_file)
             break;
         }
 
-		constexpr size_t OPEN_FIELDS_NUM = 10;
+		constexpr size_t OPEN_FIELDS_NUM = 8;
 		constexpr size_t BEGINNER_FIELDS_NUM = 4;
 
 		const auto fields = SplitComma(buffer);
@@ -312,7 +312,7 @@ std::pair< BatterData, bool > Team::ConvertBatterDataOpenClass_(const std::strin
 	constexpr size_t INDEX_AVERAGE_FIRST_BASE = 3;
 	constexpr size_t INDEX_AVERAGE_SECOND_BASE = 4;
 	constexpr size_t INDEX_AVERAGE_THIRD_BASE = 5;
-	constexpr size_t INDEX_COST = 9;
+	constexpr size_t INDEX_COST = 7;
 
 	if (fields.size() < INDEX_COST)
 	{
