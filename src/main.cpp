@@ -66,7 +66,7 @@ int HitResultToForwardBase(HIT_RESULT result)
 		return 1;
 	case HIT_RESULT::SECOND_BASE:
 		return 2;
-	case HIT_RESULT::THREE_STRIKES:
+	case HIT_RESULT::THIRD_BASE:
 		return 3;
 	case HIT_RESULT::HOMERUN:
 		return 4;
@@ -837,15 +837,25 @@ int Base::Hit( HIT_RESULT hit )
 		return 0;
 	}
 
-	if (hit == HIT_RESULT::FOURE_BALL)
-	{
-		return 0; /*TODO*/
-	}
-
 	int tokuten = 0;
 	
 	m_Base[0] = true; // 打者BOXは常にtrue
 	
+	if (hit == HIT_RESULT::FOURE_BALL)
+	{	// 四球処理 進塁先に選手がいる場合のみ、その選手を進塁させる
+		auto p = std::find(std::begin(m_Base), std::end(m_Base), false);
+		if (p == std::end(m_Base))
+		{
+			m_Base[0] = false;
+			return 1;
+		}
+
+		*p = true;
+		m_Base[0] = false;
+
+		return 0;
+	}
+
 	// 出塁済みの選手をヒット結果数分進塁させる
 	for( int i = 4 - 1 ; i >= 0 ; i-- )
 	{
@@ -1280,8 +1290,6 @@ int main( int argc , char** argv )
 
 	// 試合
 	PlayBall(senkou,koukou);
-
-	getchar();
 
 	return 0;
 }
