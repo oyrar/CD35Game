@@ -878,10 +878,12 @@ public:
 	{
 		for (const auto& i : batter_result_)
 		{
+#if 0
 			if (BatterHitResult(i) == 0)
 			{
 				continue;
 			}
+#endif
 
 			// イニング
 			fprintf(stdout, u8"%s", prefix.c_str());
@@ -945,7 +947,11 @@ private:
 	{
 		std::stringstream ss;
 		const int hit = BatterHitResult(data);
-		if (hit >= 4)
+		if (hit == 0)
+		{
+			ss << u8"アウト";
+		}
+		else if (hit >= 4)
 		{
 			ss << u8"本塁打";
 		}
@@ -1228,7 +1234,9 @@ int main( int argc , char** argv )
 
 	// 試合
 	PlayBall(senkou,koukou);
-	
+
+	getchar();
+
 	return 0;
 }
 
