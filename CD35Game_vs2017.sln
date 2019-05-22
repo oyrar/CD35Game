@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CD35Game", "CD35Game\CD35Game.vcxproj", "{75174F8A-64AF-4734-806B-7E4BBC219B0F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CD35Game_vs2017", "CD35Game_vs2017\CD35Game_vs2017.vcxproj", "{75174F8A-64AF-4734-806B-7E4BBC219B0F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
