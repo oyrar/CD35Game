@@ -46,6 +46,39 @@ constexpr const char* FO_W = "w";
 constexpr const char* FO_R = "rb";
 //constexpr const char* FO_R = "r,ccs=UTF-8";
 
+enum class HIT_RESULT
+{
+	FIRST_BASE,
+	SECOND_BASE,
+	THIRD_BASE,
+	HOMERUN,
+
+	THREE_STRIKES,
+	FOURE_BALL,
+};
+
+// ヒット結果から進塁数への変換
+int HitResultToForwardBase(HIT_RESULT result)
+{
+	switch (result)
+	{
+	case HIT_RESULT::FIRST_BASE:
+		return 1;
+	case HIT_RESULT::SECOND_BASE:
+		return 2;
+	case HIT_RESULT::THREE_STRIKES:
+		return 3;
+	case HIT_RESULT::HOMERUN:
+		return 4;
+	case HIT_RESULT::FOURE_BALL:
+		return 1;	// 四球は1塁進む扱いにする
+	default:
+		break;
+	}
+
+	return 0;
+}
+
 // = BatterData
 
 /*
@@ -62,30 +95,28 @@ struct BatterData
     unsigned int cost;			// コスト
 
 	// ヒット結果判定
-	int ResultHit(void) const
+	HIT_RESULT ResultHit(void) const
 	{
-		int hit;
-		
 		const double rnd = static_cast<double>(rand()) / RAND_MAX;
 		
 		if( rnd < anda )
 		{
-			hit = 1;
+			return HIT_RESULT::FIRST_BASE;
 		}
 		else if( rnd < niruida )
 		{
-			hit = 2;
+			return HIT_RESULT::SECOND_BASE;
 		}
 		else if( rnd < sanruida )
 		{
-			hit = 3;
+			return HIT_RESULT::THIRD_BASE;
 		}
 		else 
 		{
-			hit = 4;
+			return HIT_RESULT::HOMERUN;
 		}
-		
-		return hit;
+
+		// no reach
 	}
 };
 
@@ -738,8 +769,8 @@ Team::readPlayer(const std::string& player_data)
 		}
 		catch (std::exception& e)
 		{
-			fprintf(stderr, u8"%s:%d 数値変換エラー:%s\n",
-				player_data.c_str(), i + 2, line.c_str());
+			fprintf(stderr, u8"%s:%d 数値変換エラー(%s):%s\n",
+				player_data.c_str(), i + 2, e.what(), line.c_str());
 
 			return false;
 		}
@@ -767,7 +798,7 @@ Team::readPlayer(const std::string& player_data)
 		}
 		catch (std::out_of_range& e)
 		{
-			fprintf(stderr, u8"%s:%d ID:%dは存在しません\n", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id);
+			fprintf(stderr, u8"%s:%d ID:%dは存在しません(%s)\n", player_data.c_str(), i + 2 /* チーム名の一行＋0オリジンから1オリジンへの変換 */, id, e.what());
 			return false;
 		}
 
@@ -791,7 +822,7 @@ public :
 	{
 	}
 
-	int Hit( int hit );
+	int Hit( HIT_RESULT hit );
 	void Clear( void );
 
 private:
@@ -799,8 +830,18 @@ private:
 };
 
 // ヒット処理
-int Base::Hit( int hit )
+int Base::Hit( HIT_RESULT hit )
 {
+	if (hit == HIT_RESULT::THREE_STRIKES)
+	{
+		return 0;
+	}
+
+	if (hit == HIT_RESULT::FOURE_BALL)
+	{
+		return 0; /*TODO*/
+	}
+
 	int tokuten = 0;
 	
 	m_Base[0] = true; // 打者BOXは常にtrue
@@ -814,7 +855,7 @@ int Base::Hit( int hit )
 			// 出塁者をなしにする。
 			m_Base[i] = false;
 			
-			int j = i + hit;
+			const int j = i + HitResultToForwardBase(hit);
 
 			// ホームベースに帰れば加点する。
 			if( j > 4 - 1 )
@@ -856,16 +897,9 @@ public:
 	InningTeamPlayData& operator=(InningTeamPlayData&&) noexcept = default;
 	~InningTeamPlayData() = default;
 
-	void SetBatterResult(const BatterData& batter, int result, int tokuten)
+	void SetBatterResult(const BatterData& batter, HIT_RESULT result, int tokuten)
 	{
 		batter_result_.push_back(std::make_tuple(batter, result, tokuten));
-	}
-
-	size_t HitCount() const
-	{
-		return std::count_if(batter_result_.cbegin(), batter_result_.cend(), [](const std::tuple<BatterData, int, int>& v) -> bool {
-			return (0 != BatterHitResult(v));
-		});
 	}
 
 	size_t batterCount() const
@@ -938,37 +972,49 @@ public:
 
 private:
 
-	inline static int BatterHitResult(const std::tuple< BatterData, int, int >& data)
+	inline static HIT_RESULT BatterHitResult(const std::tuple< BatterData, HIT_RESULT, int >& data)
 	{
 		return std::get<1>(data);
 	}
 
-	inline static std::string BatterHitResultString(const std::tuple< BatterData, int, int >& data)
+	inline static std::string BatterHitResultString(const std::tuple< BatterData, HIT_RESULT, int >& data)
 	{
 		std::stringstream ss;
-		const int hit = BatterHitResult(data);
-		if (hit == 0)
+		const HIT_RESULT hit = BatterHitResult(data);
+		switch (hit)
 		{
+		case HIT_RESULT::THREE_STRIKES:
 			ss << u8"アウト";
-		}
-		else if (hit >= 4)
-		{
+			break;
+		case HIT_RESULT::FIRST_BASE:
+			ss << u8"一塁打";
+			break;
+		case HIT_RESULT::SECOND_BASE:
+			ss << u8"二塁打";
+			break;
+		case HIT_RESULT::THIRD_BASE:
+			ss << u8"三塁打";
+			break;
+		case HIT_RESULT::HOMERUN:
 			ss << u8"本塁打";
-		}
-		else
-		{
-			ss << std::setw(2) << std::setfill(' ') << hit << u8"塁打";
+			break;
+		case HIT_RESULT::FOURE_BALL:
+			ss << u8"　四球";
+			break;
+		default:
+			// no reach
+			break;
 		}
 
 		return ss.str();
 	}
 
-	inline static int BatterRunResult(const std::tuple< BatterData, int, int >& data)
+	inline static int BatterRunResult(const std::tuple< BatterData, HIT_RESULT, int >& data)
 	{
 		return std::get<2>(data);
 	}
 
-	std::vector< std::tuple< BatterData, int, int > > batter_result_{};	// 打順ごとの結果(バッター情報, 塁打, 得点
+	std::vector< std::tuple< BatterData, HIT_RESULT, int > > batter_result_{};	// 打順ごとの結果(バッター情報, 塁打, 得点
 	int run_{ 0 };	// 得点
 	bool valid_{ false };
 
@@ -1242,8 +1288,8 @@ int main( int argc , char** argv )
 
 InningTeamPlayData Play( Team &seme, Team &mamori );
 
-int Chkhit( const BatterData& batter , const PitcherData& pitcher );
-bool IsHit( const BatterData& batter , const PitcherData& pitcher );
+HIT_RESULT Chkhit( const BatterData& batter , const PitcherData& pitcher );
+std::pair< bool, bool > IsHit( const BatterData& batter , const PitcherData& pitcher );	// 戻り値first ヒット有無, second 四球有無
 
 bool IsInningFinishBatFirst(int inning, int first_run, int second_run)
 {
@@ -1328,11 +1374,11 @@ InningTeamPlayData  Play( Team &seme, Team &mamori)
 	{
 		// ヒット結果を判定
 		const BatterData batter = seme.Batter();
-		const int hit = Chkhit( batter, mamori.Pitcher() );
+		const HIT_RESULT hit = Chkhit( batter, mamori.Pitcher() );
 
 		// 出塁数が0であればアウトとする
 		const int before_tokuten = tokuten;
-		if( 0 == hit )
+		if( HIT_RESULT::THREE_STRIKES == hit )
 		{
 			out++;
 		}
@@ -1354,27 +1400,30 @@ InningTeamPlayData  Play( Team &seme, Team &mamori)
 }
 
 // ヒット確認
-int Chkhit( const BatterData& batter , const PitcherData& pitcher )
+HIT_RESULT Chkhit( const BatterData& batter , const PitcherData& pitcher )
 {
-	int hit = 0;
-	
-	// ヒットしたか判定
-	if( IsHit( batter, pitcher ) )
-	{
-		// ヒットであれば出塁数を算出する。
-		hit = batter.ResultHit();
+	// ヒット判定
+	auto hit_result = IsHit(batter, pitcher);
+	if (hit_result.first)
+	{	// ヒットであればヒット種別を算出する。
+		return batter.ResultHit();
 	}
-	
-	return hit;
+
+	if (hit_result.second)
+	{	// 四球
+		return HIT_RESULT::FOURE_BALL;
+	}
+
+	// 三振
+	return HIT_RESULT::THREE_STRIKES;
 }
 
 // ヒット判定
-bool IsHit( const BatterData& batter , const PitcherData& pitcher )
+// 戻り値first ヒット有無, second 四球有無
+std::pair< bool, bool > IsHit( const BatterData& batter , const PitcherData& pitcher )
 {
 	const double bougyoritu = pitcher.bougyoritsu;
 	const double daritu = batter.daritsu;
-	
-	bool ret = false;
 	
 	// ヒット率を取得
 	const double hitritu = ( bougyoritu + daritu ) / 2.0;
@@ -1384,16 +1433,15 @@ bool IsHit( const BatterData& batter , const PitcherData& pitcher )
 	
 	const double rnd1 = static_cast<double>(rand()) / RAND_MAX;
 	
-	// 四球でもヒット扱いにする。
-	if( rnd1 < ( hitritu + sikyuuritu) )
+	if (rnd1 < hitritu)
 	{
-		ret = true;
+		return std::make_pair(true, false);
 	}
-	else
+	if (rnd1 < (hitritu + sikyuuritu))
 	{
-		ret = false;
+		return std::make_pair(false, true);
 	}
-	
-	return ret;
+
+	return std::make_pair(false, false);
 }
 
