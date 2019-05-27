@@ -540,7 +540,7 @@ Team::readPitcherData(const std::string& data_file)
             break;
         }
 
-		constexpr size_t OPEN_FIELDS_NUM = 8;
+		constexpr size_t OPEN_FIELDS_NUM = 5;
 		constexpr size_t BEGINNER_FIELDS_NUM = 4;
 
 		const auto fields = SplitComma(buffer);
@@ -576,7 +576,7 @@ std::pair< PitcherData, bool > Team::ConvertPitcherDataOpenClass_(
 	constexpr size_t INDEX_NAME = 1;
 	constexpr size_t INDEX_AVERAGE_BOUGYO = 2;
 	constexpr size_t INDEX_AVERAGE_SIKYU = 3;
-	constexpr size_t INDEX_COST = 7;
+	constexpr size_t INDEX_COST = 4;
 	if (fields.size() <= INDEX_COST)
 	{
 		fprintf(stderr, u8"%s:%d missing fieldsn", data_file.c_str(), line_no + 1);
